@@ -5,9 +5,11 @@ import { uploadCsv } from '@/lib/api'
 
 interface Props {
   onComplete: () => void
+  label?: string
+  className?: string
 }
 
-export default function CsvUploadButton({ onComplete }: Props) {
+export default function CsvUploadButton({ onComplete, label, className = '' }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
   const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
@@ -46,21 +48,23 @@ export default function CsvUploadButton({ onComplete }: Props) {
       <button
         onClick={() => inputRef.current?.click()}
         disabled={loading}
-        className="border border-gray-300 text-gray-700 text-sm px-3 sm:px-4 py-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-50 transition-colors whitespace-nowrap"
+        className={`w-full sm:w-auto text-center border border-sky-300 bg-sky-50 text-sky-700 text-sm px-3 sm:px-4 py-1.5 rounded-lg hover:bg-sky-100 disabled:opacity-50 transition-colors whitespace-nowrap ${className}`}
       >
         {loading ? 'Importing...' : (
-          <>
-            <span className="sm:hidden">CSV</span>
-            <span className="hidden sm:inline">Import CSV</span>
-          </>
+          label ? label : (
+            <>
+              <span className="sm:hidden">CSV</span>
+              <span className="hidden sm:inline">Import CSV</span>
+            </>
+          )
         )}
       </button>
 
       {/* Toast */}
       {toast && (
         <div className={`fixed bottom-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl shadow-lg text-sm font-medium transition-all whitespace-nowrap ${toast.type === 'success'
-            ? 'bg-gray-900 text-white'
-            : 'bg-red-500 text-white'
+          ? 'bg-gray-900 text-white'
+          : 'bg-red-500 text-white'
           }`}>
           {toast.message}
         </div>

@@ -33,6 +33,20 @@ export function getStats(): Promise<JobStats> {
   return apiFetch<JobStats>("/jobs/stats/");
 }
 
+export async function getAllJobs(filters: JobFilters = {}): Promise<Job[]> {
+  const allJobs: Job[] = [];
+  let page = 1;
+
+  while (true) {
+    const data = await getJobs({ ...filters, page, page_size: 100 });
+    allJobs.push(...data.results);
+    if (page >= data.total_pages) break;
+    page += 1;
+  }
+
+  return allJobs;
+}
+
 export function createJob(data: Partial<Job>): Promise<Job> {
   return apiFetch<Job>("/jobs/create/", {
     method: "POST",

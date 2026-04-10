@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
-import { getJobs, getStats, createJob, updateJob, deleteJob } from '@/lib/api'
+import { getAllJobs, getJobs, getStats, createJob, updateJob, deleteJob } from '@/lib/api'
 import { Job, JobStats } from '@/types/job'
 import JobTable from '@/components/JobTable'
 import StatCards from '@/components/StatCards'
@@ -21,6 +21,7 @@ export default function Home() {
   const [stats, setStats] = useState<JobStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
+  const [exporting, setExporting] = useState(false)
   const [search, setSearch] = useState('')
   const [activeStatus, setActiveStatus] = useState('')
   const [page, setPage] = useState(1)
@@ -101,11 +102,68 @@ export default function Home() {
     fetchStats()
   }
 
+  const exportJobsToCsv = (jobsToExport: Job[]) => {
+    const headers = [
+      'Company Name',
+      'Role',
+      'Job Link',
+      'Applied Date',
+      'Type',
+      'Salary',
+      'Status',
+      'Notes',
+      'Created At',
+    ]
+
+    const escapeCsv = (value: string | null | undefined) => {
+      const text = String(value ?? '')
+      if (/[",\n]/.test(text)) {
+        return `"${text.replace(/"/g, '""')}"`
+      }
+      return text
+    }
+
+    const rows = jobsToExport.map(job => [
+      job.company_name,
+      job.job_title,
+      job.job_link,
+      job.date_applied,
+      job.type_of_job,
+      job.salary_annual,
+      job.application_status,
+      job.notes,
+      job.created_at,
+    ].map(escapeCsv).join(','))
+
+    return [headers.join(','), ...rows].join('\n')
+  }
+
+  const handleExport = async () => {
+    setExporting(true)
+    try {
+      const allJobs = await getAllJobs()
+      const csv = exportJobsToCsv(allJobs)
+      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
+      const url = URL.createObjectURL(blob)
+      const link = document.createElement('a')
+      link.href = url
+      link.download = `job-tracker-backup-${new Date().toISOString().slice(0, 10)}.csv`
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+      URL.revokeObjectURL(url)
+    } catch {
+      // ignore export errors silently for now
+    } finally {
+      setExporting(false)
+    }
+  }
+
   return (
     <div className="min-h-screen" style={{ background: '#f1f5f9' }}>
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
-        <div className="max-w-screen-xl mx-auto px-6 h-14 flex items-center justify-between">
-          <div className="flex items-center gap-3">
+        <div className="max-w-screen-xl mx-auto px-6 py-3 flex flex-wrap items-center justify-between gap-3">
+          <div className="flex items-center gap-3 min-w-0">
             <div className="w-7 h-7 rounded-lg bg-gray-900 flex items-center justify-center">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <rect x="1" y="1" width="5" height="5" rx="1" fill="white" />
@@ -122,10 +180,19 @@ export default function Home() {
             )}
           </div>
           <div className="flex items-center gap-2">
-            <CsvUploadButton onComplete={() => { fetchJobs(); fetchStats() }} />
+            <div className="hidden sm:flex items-center gap-2">
+              <button
+                onClick={handleExport}
+                disabled={exporting}
+                className="border border-amber-300 bg-amber-50 text-amber-700 text-sm px-3 sm:px-4 py-1.5 rounded-lg hover:bg-amber-100 disabled:opacity-50 transition-colors whitespace-nowrap"
+              >
+                {exporting ? 'Backing up...' : 'Export CSV'}
+              </button>
+              <CsvUploadButton onComplete={() => { fetchJobs(); fetchStats() }} />
+            </div>
             <button
               onClick={() => setModal({ mode: 'create' })}
-              className="bg-gray-900 text-white text-sm px-3 sm:px-4 py-1.5 rounded-lg hover:bg-gray-700 transition-colors font-medium whitespace-nowrap"
+              className="w-full sm:w-auto text-center bg-gray-900 text-white text-sm px-3 sm:px-4 py-1.5 rounded-lg hover:bg-gray-700 transition-colors font-medium whitespace-nowrap"
             >
               + Add
             </button>
