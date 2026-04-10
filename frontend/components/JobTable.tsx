@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Job } from '@/types/job'
-import { getStatusColor } from '@/lib/constants'
+import { getStatusStyle } from '@/lib/constants'
 
 type SortKey = keyof Job
 type SortDir = 'asc' | 'desc'
@@ -20,16 +20,15 @@ const COLUMNS: { label: string; key: SortKey }[] = [
   { label: 'Type', key: 'type_of_job' },
   { label: 'Salary', key: 'salary_annual' },
   { label: 'Applied', key: 'date_applied' },
+  { label: 'Notes', key: 'notes' },
 ]
-
-const SKELETON_ROWS = 8
 
 function SkeletonRow() {
   return (
     <tr>
-      {[...Array(8)].map((_, i) => (
-        <td key={i} className="px-4 py-3">
-          <div className="h-4 bg-gray-200 rounded animate-pulse" style={{ width: `${60 + (i * 17) % 40}%` }} />
+      {[...Array(7)].map((_, i) => (
+        <td key={i} className="px-5 py-3.5">
+          <div className="h-3.5 bg-gray-100 rounded animate-pulse" style={{ width: `${55 + (i * 19) % 35}%` }} />
         </td>
       ))}
     </tr>
@@ -58,67 +57,79 @@ export default function JobTable({ jobs, loading, onEdit }: Props) {
 
   const arrow = (key: SortKey) => {
     if (sortKey !== key) return <span className="ml-1 text-gray-300">↕</span>
-    return <span className="ml-1">{sortDir === 'asc' ? '↑' : '↓'}</span>
+    return <span className="ml-1 text-gray-500">{sortDir === 'asc' ? '↑' : '↓'}</span>
   }
 
   const showSkeleton = loading && jobs.length === 0
 
   return (
-    <div className={`overflow-x-auto rounded-xl border border-gray-200 transition-opacity duration-150 ${loading ? 'opacity-60' : 'opacity-100'}`}>
+    <div className={`transition-opacity duration-150 ${loading ? 'opacity-60' : 'opacity-100'}`}>
       <table className="w-full text-sm">
-        <thead className="bg-gray-50 text-gray-500 text-xs uppercase tracking-wide">
-          <tr>
+        <thead>
+          <tr className="border-b border-gray-100">
             {COLUMNS.map(col => (
               <th
                 key={col.key}
                 onClick={() => handleSort(col.key)}
-                className="px-4 py-3 text-left cursor-pointer hover:text-gray-800 select-none whitespace-nowrap"
+                className="px-5 py-3 text-left text-xs font-semibold text-gray-400 uppercase tracking-wider cursor-pointer hover:text-gray-600 select-none whitespace-nowrap"
               >
                 {col.label}{arrow(col.key)}
               </th>
             ))}
-            <th className="px-4 py-3 text-left">Notes</th>
           </tr>
         </thead>
-        <tbody className="divide-y divide-gray-100 bg-white">
+        <tbody className="divide-y divide-gray-50">
           {showSkeleton
-            ? [...Array(SKELETON_ROWS)].map((_, i) => <SkeletonRow key={i} />)
-            : sorted.map(job => {
-              const { bg, text } = getStatusColor(job.application_status)
-              return (
-                <tr
-                  key={job.id}
-                  onClick={() => onEdit(job)}
-                  className="hover:bg-blue-50 cursor-pointer transition-colors"
-                >
-                  <td className="px-4 py-3 font-medium text-gray-900">
-                    {job.job_link ? (
-                      <a
-                        href={job.job_link}
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        onClick={e => e.stopPropagation()}
-                        className="hover:underline text-blue-700"
-                      >
-                        {job.company_name}
-                      </a>
-                    ) : (
-                      job.company_name
-                    )}
+            ? [...Array(8)].map((_, i) => <SkeletonRow key={i} />)
+            : sorted.length === 0
+              ? (
+                <tr>
+                  <td colSpan={7} className="text-center py-16 text-gray-400 text-sm">
+                    No applications found.
                   </td>
-                  <td className="px-4 py-3 text-gray-700">{job.job_title}</td>
-                  <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${bg} !${text}`}>
-                      {job.application_status || '—'}
-                    </span>
-                  </td>
-                  <td className="px-4 py-3 text-gray-600">{job.type_of_job || '—'}</td>
-                  <td className="px-4 py-3 text-gray-600">{job.salary_annual || '—'}</td>
-                  <td className="px-4 py-3 text-gray-500">{job.date_applied ?? '—'}</td>
-                  <td className="px-4 py-3 text-gray-400 max-w-xs truncate">{job.notes || '—'}</td>
                 </tr>
               )
-            })
+              : sorted.map(job => {
+                const { bg, color } = getStatusStyle(job.application_status)
+                return (
+                  <tr
+                    key={job.id}
+                    onClick={() => onEdit(job)}
+                    className="hover:bg-gray-50 cursor-pointer transition-colors group"
+                  >
+                    <td className="px-5 py-3.5 font-medium text-gray-900 whitespace-nowrap">
+                      {job.job_link ? (
+                        <a
+                          href={job.job_link}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          onClick={e => e.stopPropagation()}
+                          className="text-blue-600 hover:underline"
+                        >
+                          {job.company_name}
+                        </a>
+                      ) : (
+                        job.company_name
+                      )}
+                    </td>
+                    <td className="px-5 py-3.5 text-gray-600 max-w-xs">{job.job_title}</td>
+                    <td className="px-5 py-3.5">
+                      {job.application_status ? (
+                        <span
+                          className={`px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${bg}`}
+                          style={{ color: color }}
+                        >
+                          {job.application_status}
+                        </span>
+                      ) : '—'}
+                    </td>
+                    <td className="px-5 py-3.5 text-gray-500 whitespace-nowrap">{job.type_of_job || '—'}</td>
+                    <td className="px-5 py-3.5 text-gray-500 whitespace-nowrap">{job.salary_annual || '—'}</td>
+                    <td className="px-5 py-3.5 text-gray-400 whitespace-nowrap">{job.date_applied ?? '—'}</td>
+                    <td className="px-5 py-3.5 text-gray-400 max-w-xs truncate">{job.notes || '—'}</td>
+                  </tr>
+                )
+              })
           }
         </tbody>
       </table>

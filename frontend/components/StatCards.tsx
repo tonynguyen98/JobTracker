@@ -1,6 +1,5 @@
 import { JobStats } from '@/types/job'
-import { getStatusColor } from '@/lib/constants'
-
+import { getStatusStyle } from '@/lib/constants'
 interface Props {
   stats: JobStats
   activeStatus: string
@@ -9,31 +8,45 @@ interface Props {
 
 export default function StatCards({ stats, activeStatus, onStatusClick }: Props) {
   return (
-    <div className="flex flex-wrap gap-3 mb-6">
+    <div className="flex flex-wrap gap-3">
       <button
         onClick={() => onStatusClick('')}
-        className={`rounded-xl p-4 text-left border transition-all min-w-[120px] ${activeStatus === ''
-          ? 'border-gray-400 shadow-sm bg-white'
-          : 'border-transparent bg-gray-100 hover:bg-gray-200'
+        className={`rounded-xl px-5 py-4 text-left border transition-all min-w-[100px] ${activeStatus === ''
+          ? 'bg-gray-900 border-gray-900 shadow-sm'
+          : 'bg-white border-gray-200 hover:border-gray-300 shadow-sm'
           }`}
       >
-        <div className="text-2xl font-semibold text-gray-900">{stats.total}</div>
-        <div className="text-sm text-gray-500 mt-1 whitespace-nowrap">Total</div>
+        <div className={`text-2xl font-bold tracking-tight ${activeStatus === '' ? 'text-white' : 'text-gray-900'}`}>
+          {stats.total}
+        </div>
+        <div className={`text-xs mt-1 font-medium whitespace-nowrap ${activeStatus === '' ? 'text-gray-300' : 'text-gray-500'}`}>
+          All applications
+        </div>
       </button>
 
       {Object.entries(stats.by_status).map(([status, count]) => {
-        const { bg, text } = getStatusColor(status)
+        const { bg, color } = getStatusStyle(status)
         const isActive = activeStatus === status
         return (
           <button
             key={status}
             onClick={() => onStatusClick(status)}
-            className={`rounded-xl p-4 text-left border transition-all min-w-[180px] ${isActive ? 'border-gray-400 shadow-sm bg-white' : 'border-transparent bg-gray-100 hover:bg-gray-200'
+            className={`rounded-xl px-5 py-4 text-left border transition-all min-w-[140px] shadow-sm ${isActive
+              ? 'bg-gray-900 border-gray-900'
+              : 'bg-white border-gray-200 hover:border-gray-300'
               }`}
           >
-            <div className="text-2xl font-semibold text-gray-900">{count}</div>
-            <div className={`text-xs font-medium mt-1 inline-block px-2 py-0.5 rounded-full whitespace-nowrap ${bg} !${text}`}>
-              {status}
+            <div className={`text-2xl font-bold tracking-tight ${isActive ? 'text-white' : 'text-gray-900'}`}>
+              {count}
+            </div>
+            <div className="mt-1.5">
+              {isActive ? (
+                <span className="text-xs font-medium text-gray-300 whitespace-nowrap">{status}</span>
+              ) : (
+                <span className={`px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${bg}`} style={{ color }}>
+                  {status}
+                </span>
+              )}
             </div>
           </button>
         )

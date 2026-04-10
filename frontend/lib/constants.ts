@@ -11,20 +11,21 @@ export const STATUS_OPTIONS = [
   "No Reply",
 ];
 
-export const STATUS_COLORS: Record<string, { bg: string; text: string }> = {
-  "Not Started": { bg: "bg-gray-100", text: "text-gray-600" },
-  Applied: { bg: "bg-blue-100", text: "text-blue-800" },
-  "Coding Assessment": { bg: "bg-purple-100", text: "text-purple-800" },
-  "Interview Scheduled": { bg: "bg-sky-100", text: "text-sky-800" },
-  "Wait Next Round": { bg: "bg-yellow-100", text: "text-yellow-800" },
-  "Next Round Confirmed": { bg: "bg-teal-100", text: "text-teal-800" },
-  Interviewed: { bg: "bg-orange-100", text: "text-orange-800" },
-  Accepted: { bg: "bg-green-100", text: "text-green-800" },
-  Rejected: { bg: "bg-red-100", text: "text-red-800" },
-  "No Reply": { bg: "bg-gray-100", text: "text-gray-500" },
-  default: { bg: "bg-gray-100", text: "text-gray-600" },
+const STATUS_MAP: Record<string, { bg: string; color: string }> = {
+  "Not Started": { bg: "bg-gray-100", color: "#4b5563" },
+  Applied: { bg: "bg-blue-100", color: "#1e40af" },
+  "Coding Assessment": { bg: "bg-purple-100", color: "#6b21a8" },
+  "Interview Scheduled": { bg: "bg-sky-100", color: "#0c4a6e" },
+  "Wait Next Round": { bg: "bg-yellow-100", color: "#854d0e" },
+  "Next Round Confirmed": { bg: "bg-teal-100", color: "#134e4a" },
+  Interviewed: { bg: "bg-orange-100", color: "#7c2d12" },
+  Accepted: { bg: "bg-green-100", color: "#14532d" },
+  Rejected: { bg: "bg-red-100", color: "#7f1d1d" },
+  "No Reply": { bg: "bg-gray-100", color: "#374151" },
 };
 
-export function getStatusColor(status: string) {
-  return STATUS_COLORS[status] ?? STATUS_COLORS.default;
+const DEFAULT_STATUS = { bg: "bg-gray-100", color: "#4b5563" };
+
+export function getStatusStyle(status: string) {
+  return STATUS_MAP[status] ?? DEFAULT_STATUS;
 }

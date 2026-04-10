@@ -1,18 +1,12 @@
-import { Job, JobStats } from "@/types/job";
+import { Job, PaginatedJobs, JobStats, UploadResult } from "@/types/job";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
 
 export interface JobFilters {
   status?: string;
-  tag?: string;
   search?: string;
-}
-
-export interface UploadResult {
-  total_in_csv: number;
-  created: number;
-  updated: number;
-  skipped: number;
+  page?: number;
+  page_size?: number;
 }
 
 async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
@@ -24,13 +18,14 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
   return res.json();
 }
 
-export function getJobs(filters: JobFilters = {}): Promise<Job[]> {
+export function getJobs(filters: JobFilters = {}): Promise<PaginatedJobs> {
   const params = new URLSearchParams();
   if (filters.status) params.set("status", filters.status);
-  if (filters.tag) params.set("tag", filters.tag);
   if (filters.search) params.set("search", filters.search);
+  if (filters.page) params.set("page", String(filters.page));
+  if (filters.page_size) params.set("page_size", String(filters.page_size));
   const qs = params.toString();
-  return apiFetch<Job[]>(`/jobs/${qs ? `?${qs}` : ""}`);
+  return apiFetch<PaginatedJobs>(`/jobs/${qs ? `?${qs}` : ""}`);
 }
 
 export function getStats(): Promise<JobStats> {
@@ -61,6 +56,6 @@ export function uploadCsv(file: File): Promise<UploadResult> {
   return apiFetch<UploadResult>("/jobs/upload-csv/", {
     method: "POST",
     body: form,
-    headers: {}, // let browser set multipart boundary, don't pass Content-Type
+    headers: {},
   });
 }

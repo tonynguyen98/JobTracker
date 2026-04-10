@@ -4,6 +4,7 @@ from rest_framework import status
 from .models import Job
 from .serializers import JobSerializer
 from .utils import load_jobs_from_content
+import math
 
 
 @api_view(['GET'])
@@ -12,6 +13,8 @@ def job_list(request):
 
     status_filter = request.query_params.get('status')
     search = request.query_params.get('search')
+    page = int(request.query_params.get('page', 1))
+    page_size = int(request.query_params.get('page_size', 20))
 
     if status_filter:
         jobs = jobs.filter(application_status__iexact=status_filter)
@@ -19,9 +22,19 @@ def job_list(request):
         jobs = jobs.filter(company_name__icontains=search) | \
                jobs.filter(job_title__icontains=search)
 
-    serializer = JobSerializer(jobs, many=True)
-    return Response(serializer.data)
+    total = jobs.count()
+    total_pages = math.ceil(total / page_size)
+    start = (page - 1) * page_size
+    end = start + page_size
 
+    serializer = JobSerializer(jobs[start:end], many=True)
+    return Response({
+        'results': serializer.data,
+        'total': total,
+        'page': page,
+        'page_size': page_size,
+        'total_pages': total_pages,
+    })
 
 @api_view(['POST'])
 def job_create(request):
