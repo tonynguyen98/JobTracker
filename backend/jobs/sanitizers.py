@@ -72,13 +72,15 @@ def sanitize_application_status(val: str) -> str:
 
 
 def sanitize_job(data: dict) -> dict:
+    date_applied = data.get('date_applied')
     return {
         'company_name':       sanitize_text(data.get('company_name', ''), 255),
         'job_link':           sanitize_url(data.get('job_link', '')),
         'job_title':          sanitize_text(data.get('job_title', ''), 255),
-        'date_applied':       data.get('date_applied'),  # already a date obj or None
+        'date_applied':       date_applied,
         'type_of_job':        sanitize_text(data.get('type_of_job', ''), 100),
         'salary_annual':      format_salary(data.get('salary_annual', '')),
         'application_status': sanitize_application_status(data.get('application_status', '')),
         'notes':              sanitize_text(data.get('notes', ''), 2000),
+        'created_at':         date_applied or data.get('created_at'),
     }
