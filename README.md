@@ -4,7 +4,7 @@ A full-stack job application tracker built with Next.js, Django, and PostgreSQL.
 
 ## Stack
 
-- **Frontend** — Next.js 14 (App Router), TypeScript, Tailwind CSS
+- **Frontend** — Next.js 16 (App Router), TypeScript, Tailwind CSS
 - **Backend** — Django, Django REST Framework
 - **Database** — PostgreSQL
 
@@ -13,26 +13,27 @@ A full-stack job application tracker built with Next.js, Django, and PostgreSQL.
 ```
 JobTracker/
 ├── backend/
-│   ├── config/          # Django project settings and URLs
-│   ├── jobs/            # Jobs app — models, views, serializers, utils
+│   ├── config/          # Django project settings and URL config
+│   ├── data/            # Optional CSV source for imports
+│   ├── jobs/            # Jobs app — models, serializers, views, utils
 │   │   ├── models.py
 │   │   ├── views.py
 │   │   ├── serializers.py
 │   │   ├── urls.py
 │   │   └── utils.py
-│   ├── data/            # Drop your jobs.csv here for local CSV sync
 │   ├── manage.py
 │   └── .env             # Local environment variables (not committed)
 └── frontend/
     ├── app/
-    │   └── page.tsx     # Main job table view
+    │   └── page.tsx     # Main job table and dashboard UI
     ├── components/
-    │   ├── JobTable.tsx
+    │   ├── CsvUploadButton.tsx
     │   ├── JobModal.tsx
+    │   ├── JobTable.tsx
     │   └── StatCards.tsx
     ├── lib/
-    │   ├── api.ts        # Fetch helpers for all endpoints
-    │   └── constants.ts  # Shared status options and colors
+    │   ├── api.ts        # API helpers for backend endpoints
+    │   └── constants.ts  # Shared status labels and badge styles
     └── types/
         └── job.ts        # TypeScript types
 ```
@@ -83,7 +84,7 @@ psql postgres
 ```sql
 CREATE DATABASE jobtracker_db;
 CREATE USER jobtracker_user WITH PASSWORD 'yourpassword';
-GRANT ALL PRIVILEGES ON DATABASE jobtracker TO jobtracker_user;
+GRANT ALL PRIVILEGES ON DATABASE jobtracker_db TO jobtracker_user;
 \q
 ```
 
@@ -117,21 +118,23 @@ The app will be running at `http://localhost:3000`.
 
 ## API endpoints
 
-| Method | URL                 | Description                                    |
-| ------ | ------------------- | ---------------------------------------------- |
-| GET    | `/api/jobs/`        | List all jobs, supports `?status=`, `?search=` |
-| POST   | `/api/jobs/create/` | Create a new job                               |
-| GET    | `/api/jobs/<id>/`   | Get a single job                               |
-| PATCH  | `/api/jobs/<id>/`   | Update a job                                   |
-| DELETE | `/api/jobs/<id>/`   | Delete a job                                   |
-| GET    | `/api/jobs/stats/`  | Counts by status                               |
-| POST   | `/api/jobs/sync/`   | Sync from local CSV at `backend/data/jobs.csv` |
+| Method | URL                     | Description                                                                 |
+| ------ | ----------------------- | --------------------------------------------------------------------------- |
+| GET    | `/api/jobs/`            | List jobs with optional `status`, `search`, `page`, and `page_size` filters |
+| POST   | `/api/jobs/create/`     | Create a new job                                                            |
+| GET    | `/api/jobs/<id>/`       | Retrieve a job by ID                                                        |
+| PATCH  | `/api/jobs/<id>/`       | Update a job by ID                                                          |
+| DELETE | `/api/jobs/<id>/`       | Delete a job by ID                                                          |
+| GET    | `/api/jobs/stats/`      | Return total jobs and counts by status                                      |
+| POST   | `/api/jobs/upload-csv/` | Import jobs from CSV and upsert matching rows                               |
 
 ## Features
 
-- Add, edit, and delete job applications
-- Filter by application status
-- Search by company or role
-- Sortable table columns
-- Status badges with color coding
-- Skeleton loading state on initial load
+- Add, edit, and delete job applications using a modal form
+- Filter by application status and search by company or role
+- Infinite scroll / paginated job list
+- Sortable table columns on desktop
+- Responsive mobile card view
+- CSV import with create/update/skip feedback and toast notifications
+- Status badges, totals, and stats cards for quick insights
+- Backend REST API with detail, stats, and upload endpoints
