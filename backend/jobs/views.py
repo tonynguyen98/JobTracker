@@ -8,7 +8,6 @@ from .sanitizers import sanitize_job
 import math
 from datetime import date, timedelta
 from django.db.models import Count
-from django.db.models.functions import TruncDate
 
 
 @api_view(['GET'])
@@ -92,7 +91,7 @@ def job_stats(request):
         status_counts[s] = status_counts.get(s, 0) + 1
 
     # active pipeline — exclude terminal statuses
-    terminal = {'Accepted', 'Rejected', 'No Reply', 'Not Started'}
+    terminal = {'Accepted', 'Rejected', 'No Reply', 'Not Started', 'Interviewed - No Offer'}
     active = sum(v for k, v in status_counts.items() if k not in terminal)
 
     # response rate — got any response vs total applied
@@ -100,20 +99,19 @@ def job_stats(request):
     applied_total = total - status_counts.get('Not Started', 0)
     response_rate = round((responded / applied_total) * 100) if applied_total > 0 else 0
 
-    # applications per day over last 30 days
-    thirty_days_ago = date.today() - timedelta(days=30)
+    # applications per day over last 30 days, including today
+    thirty_days_ago = date.today() - timedelta(days=29)
     daily = (
         Job.objects
         .filter(date_applied__gte=thirty_days_ago)
-        .annotate(day=TruncDate('date_applied'))
-        .values('day')
+        .values('date_applied')
         .annotate(count=Count('id'))
-        .order_by('day')
+        .order_by('date_applied')
     )
     daily_counts = {
-        str(entry['day']): entry['count']
+        str(entry['date_applied']): entry['count']
         for entry in daily
-        if entry['day']
+        if entry['date_applied']
     }
 
     # fill in zero days for the full 30 day range
