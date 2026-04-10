@@ -69,6 +69,18 @@ export default function Analytics({ stats }: Props) {
     .filter(([, count]) => count > 0)
     .sort((a, b) => b[1] - a[1])
 
+  const statusBreakdown = (() => {
+    const top = activeStatuses.slice(0, 6)
+    if (!top.some(([status]) => status === 'No Offer')) {
+      const noOffer = activeStatuses.find(([status]) => status === 'No Offer')
+      if (noOffer) {
+        top.pop()
+        top.push(noOffer)
+      }
+    }
+    return top
+  })()
+
   const totalApplied = stats.total - (stats.by_status['Not Started'] ?? 0)
   const thisWeek = stats.applications_over_time
     .slice(-7)
@@ -121,7 +133,7 @@ export default function Analytics({ stats }: Props) {
       <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-4">
         <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">By status</p>
         <div className="space-y-2">
-          {activeStatuses.slice(0, 6).map(([s, count]) => {
+          {statusBreakdown.map(([s, count]) => {
             const { bg, color } = getStatusStyle(s)
             const pct = stats.total > 0 ? Math.round((count / stats.total) * 100) : 0
             return (

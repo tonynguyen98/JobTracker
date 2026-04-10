@@ -251,6 +251,41 @@ class JobEndpointTests(APITestCase):
         self.assertEqual(response.data['top_companies'][0]['company_name'], 'Acme Corp')
         self.assertEqual(response.data['top_companies'][0]['count'], 2)
 
+    def test_job_stats_counts_no_offer_as_response_and_terminal(self):
+        Job.objects.create(
+            company_name='Acme Corp',
+            job_title='Engineer',
+            application_status='Interview Scheduled',
+            date_applied=self.today,
+        )
+        Job.objects.create(
+            company_name='Beta LLC',
+            job_title='QA Tester',
+            application_status='No Offer',
+            date_applied=self.today,
+        )
+        Job.objects.create(
+            company_name='Gamma Inc',
+            job_title='Sales Associate',
+            application_status='Accepted',
+            date_applied=self.today,
+        )
+        Job.objects.create(
+            company_name='Delta Co',
+            job_title='Customer Success',
+            application_status='No Reply',
+            date_applied=self.today,
+        )
+
+        url = reverse('job-stats')
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['total'], 4)
+        self.assertEqual(response.data['active'], 1)
+        self.assertEqual(response.data['response_rate'], 75)
+        self.assertEqual(response.data['by_status']['No Offer'], 1)
+
     def test_upload_csv_returns_400_when_file_missing_or_empty(self):
         url = reverse('upload-csv')
 
