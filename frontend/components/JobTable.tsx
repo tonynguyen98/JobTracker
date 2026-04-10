@@ -197,7 +197,7 @@ export default function JobTable({ jobs, loading, onEdit }: Props) {
                     <td className="px-5 py-3.5 text-gray-500 whitespace-nowrap">{job.type_of_job || '—'}</td>
                     <td className="px-5 py-3.5 text-gray-500 whitespace-nowrap">{job.salary_annual || '—'}</td>
                     <td className="px-5 py-3.5 text-gray-400 whitespace-nowrap">{job.date_applied ?? '—'}</td>
-                    <td className="px-5 py-3.5 text-gray-400 max-w-xs whitespace-normal break-words">{job.notes || '—'}</td>
+                    <td className="px-5 py-3.5 text-gray-400 max-w-xs truncate">{job.notes || '—'}</td>
                   </tr>
                 )
               })
