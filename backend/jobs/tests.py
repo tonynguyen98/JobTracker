@@ -16,8 +16,8 @@ class StatusSanitizerTests(TestCase):
         for status in ALLOWED_STATUSES:
             self.assertEqual(sanitize_application_status(status), status)
 
-    def test_interviewed_no_offer_is_allowed(self):
-        self.assertEqual(sanitize_application_status('Interviewed - No Offer'), 'Interviewed - No Offer')
+    def test_no_offer_is_allowed(self):
+        self.assertEqual(sanitize_application_status('No Offer'), 'No Offer')
 
 
 class JobEndpointTests(APITestCase):

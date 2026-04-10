@@ -91,7 +91,7 @@ def job_stats(request):
         status_counts[s] = status_counts.get(s, 0) + 1
 
     # active pipeline — exclude terminal statuses
-    terminal = {'Accepted', 'Rejected', 'No Reply', 'Not Started', 'Interviewed - No Offer'}
+    terminal = {'Accepted', 'Rejected', 'No Reply', 'Not Started', 'No Offer'}
     active = sum(v for k, v in status_counts.items() if k not in terminal)
 
     # response rate — got any response vs total applied
