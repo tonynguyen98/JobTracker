@@ -8,14 +8,12 @@ export interface Job {
   salary_annual: string;
   application_status: string;
   notes: string;
-  tag: string;
   created_at: string;
 }
 
 export interface JobStats {
   total: number;
   by_status: Record<string, number>;
-  by_tag: Record<string, number>;
 }
 
 export interface SyncResult {

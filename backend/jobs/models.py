@@ -9,7 +9,6 @@ class Job(models.Model):
     salary_annual = models.CharField(max_length=50, blank=True)
     application_status = models.CharField(max_length=100, blank=True)
     notes = models.TextField(blank=True)
-    tag = models.CharField(max_length=100, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):

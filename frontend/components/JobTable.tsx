@@ -2,7 +2,7 @@
 
 import { useState } from 'react'
 import { Job } from '@/types/job'
-import { STATUS_COLORS } from '@/lib/constants'
+import { getStatusColor } from '@/lib/constants'
 
 type SortKey = keyof Job
 type SortDir = 'asc' | 'desc'
@@ -84,7 +84,7 @@ export default function JobTable({ jobs, loading, onEdit }: Props) {
           {showSkeleton
             ? [...Array(SKELETON_ROWS)].map((_, i) => <SkeletonRow key={i} />)
             : sorted.map(job => {
-              const statusColor = STATUS_COLORS[job.application_status] ?? STATUS_COLORS.default
+              const { bg, text } = getStatusColor(job.application_status)
               return (
                 <tr
                   key={job.id}
@@ -108,7 +108,7 @@ export default function JobTable({ jobs, loading, onEdit }: Props) {
                   </td>
                   <td className="px-4 py-3 text-gray-700">{job.job_title}</td>
                   <td className="px-4 py-3">
-                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${statusColor}`}>
+                    <span className={`px-2 py-0.5 rounded-full text-xs font-medium ${bg} !${text}`}>
                       {job.application_status || '—'}
                     </span>
                   </td>

@@ -1,5 +1,5 @@
-import { Job, JobStats } from '@/types/job'
-import { STATUS_COLORS } from '@/lib/constants'
+import { JobStats } from '@/types/job'
+import { getStatusColor } from '@/lib/constants'
 
 interface Props {
   stats: JobStats
@@ -22,7 +22,7 @@ export default function StatCards({ stats, activeStatus, onStatusClick }: Props)
       </button>
 
       {Object.entries(stats.by_status).map(([status, count]) => {
-        const color = STATUS_COLORS[status] ?? STATUS_COLORS.default
+        const { bg, text } = getStatusColor(status)
         const isActive = activeStatus === status
         return (
           <button
@@ -32,7 +32,7 @@ export default function StatCards({ stats, activeStatus, onStatusClick }: Props)
               }`}
           >
             <div className="text-2xl font-semibold text-gray-900">{count}</div>
-            <div className={`text-xs font-medium mt-1 inline-block px-2 py-0.5 rounded-full whitespace-nowrap ${color}`}>
+            <div className={`text-xs font-medium mt-1 inline-block px-2 py-0.5 rounded-full whitespace-nowrap ${bg} !${text}`}>
               {status}
             </div>
           </button>

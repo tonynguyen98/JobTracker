@@ -6,6 +6,7 @@ import { Job, JobStats } from '@/types/job'
 import JobTable from '@/components/JobTable'
 import StatCards from '@/components/StatCards'
 import JobModal from '@/components/JobModal'
+import CsvUploadButton from '@/components/CsvUploadButton'
 
 type ModalState =
   | { mode: 'closed' }
@@ -68,12 +69,15 @@ export default function Home() {
             {stats ? `${stats.total} applications` : 'Loading...'}
           </p>
         </div>
-        <button
-          onClick={() => setModal({ mode: 'create' })}
-          className="bg-gray-900 text-white text-sm px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
-        >
-          + Add application
-        </button>
+        <div className="flex items-center gap-3">
+          <CsvUploadButton onComplete={() => { fetchJobs(); fetchStats(); }} />
+          <button
+            onClick={() => setModal({ mode: 'create' })}
+            className="bg-gray-900 text-white text-sm px-4 py-2 rounded-lg hover:bg-gray-700 transition-colors"
+          >
+            + Add application
+          </button>
+        </div>
       </div>
 
       {stats && (
