@@ -124,7 +124,7 @@ export default function Home() {
             <CsvUploadButton onComplete={() => { fetchJobs(); fetchStats() }} />
             <button
               onClick={() => setModal({ mode: 'create' })}
-              className="bg-gray-900 text-white text-sm px-4 py-1.5 rounded-lg hover:bg-gray-700 transition-colors font-medium"
+              className="bg-gray-900 text-white text-sm px-3 sm:px-4 py-1.5 rounded-lg hover:bg-gray-700 transition-colors font-medium whitespace-nowrap"
             >
               + Add
             </button>

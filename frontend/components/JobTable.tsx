@@ -35,6 +35,16 @@ function SkeletonRow() {
   )
 }
 
+function SkeletonCard() {
+  return (
+    <div className="px-4 py-4 border-b border-gray-100 space-y-2">
+      <div className="h-4 bg-gray-100 rounded animate-pulse w-1/2" />
+      <div className="h-3 bg-gray-100 rounded animate-pulse w-3/4" />
+      <div className="h-3 bg-gray-100 rounded animate-pulse w-1/3" />
+    </div>
+  )
+}
+
 export default function JobTable({ jobs, loading, onEdit }: Props) {
   const [sortKey, setSortKey] = useState<SortKey>('created_at')
   const [sortDir, setSortDir] = useState<SortDir>('desc')
@@ -62,8 +72,71 @@ export default function JobTable({ jobs, loading, onEdit }: Props) {
 
   const showSkeleton = loading && jobs.length === 0
 
-  return (
-    <div className={`transition-opacity duration-150 ${loading ? 'opacity-60' : 'opacity-100'}`}>
+  // Mobile card view
+  const mobileView = (
+    <div className="sm:hidden divide-y divide-gray-100">
+      {showSkeleton
+        ? [...Array(6)].map((_, i) => <SkeletonCard key={i} />)
+        : sorted.length === 0
+          ? <div className="text-center py-16 text-gray-400 text-sm">No applications found.</div>
+          : sorted.map(job => {
+            const { bg, color } = getStatusStyle(job.application_status)
+            return (
+              <div
+                key={job.id}
+                onClick={() => onEdit(job)}
+                className="px-4 py-4 hover:bg-gray-50 active:bg-gray-100 cursor-pointer transition-colors"
+              >
+                <div className="flex items-start justify-between gap-2 mb-1.5">
+                  <div>
+                    {job.job_link ? (
+                      <a
+                        href={job.job_link}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={e => e.stopPropagation()}
+                        className="font-semibold text-blue-600 text-sm hover:underline"
+                      >
+                        {job.company_name}
+                      </a>
+                    ) : (
+                      <span className="font-semibold text-gray-900 text-sm">{job.company_name}</span>
+                    )}
+                    <p className="text-xs text-gray-500 mt-0.5">{job.job_title}</p>
+                  </div>
+                  {job.application_status && (
+                    <span
+                      className={`shrink-0 px-2 py-0.5 rounded-full text-xs font-semibold ${bg}`}
+                      style={{ color }}
+                    >
+                      {job.application_status}
+                    </span>
+                  )}
+                </div>
+                <div className="flex flex-wrap gap-x-3 gap-y-1 mt-2">
+                  {job.type_of_job && (
+                    <span className="text-xs text-gray-400">{job.type_of_job}</span>
+                  )}
+                  {job.salary_annual && (
+                    <span className="text-xs text-gray-400">{job.salary_annual}</span>
+                  )}
+                  {job.date_applied && (
+                    <span className="text-xs text-gray-400">{job.date_applied}</span>
+                  )}
+                </div>
+                {job.notes && (
+                  <p className="text-xs text-gray-400 mt-2 whitespace-normal break-words">{job.notes}</p>
+                )}
+              </div>
+            )
+          })
+      }
+    </div>
+  )
+
+  // Desktop table view
+  const desktopView = (
+    <div className={`hidden sm:block transition-opacity duration-150 ${loading ? 'opacity-60' : 'opacity-100'}`}>
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-gray-100">
@@ -95,7 +168,7 @@ export default function JobTable({ jobs, loading, onEdit }: Props) {
                   <tr
                     key={job.id}
                     onClick={() => onEdit(job)}
-                    className="hover:bg-gray-50 cursor-pointer transition-colors group"
+                    className="hover:bg-gray-50 cursor-pointer transition-colors"
                   >
                     <td className="px-5 py-3.5 font-medium text-gray-900 whitespace-nowrap">
                       {job.job_link ? (
@@ -108,16 +181,14 @@ export default function JobTable({ jobs, loading, onEdit }: Props) {
                         >
                           {job.company_name}
                         </a>
-                      ) : (
-                        job.company_name
-                      )}
+                      ) : job.company_name}
                     </td>
                     <td className="px-5 py-3.5 text-gray-600 max-w-xs">{job.job_title}</td>
                     <td className="px-5 py-3.5">
                       {job.application_status ? (
                         <span
                           className={`px-2.5 py-1 rounded-full text-xs font-semibold whitespace-nowrap ${bg}`}
-                          style={{ color: color }}
+                          style={{ color }}
                         >
                           {job.application_status}
                         </span>
@@ -126,13 +197,20 @@ export default function JobTable({ jobs, loading, onEdit }: Props) {
                     <td className="px-5 py-3.5 text-gray-500 whitespace-nowrap">{job.type_of_job || '—'}</td>
                     <td className="px-5 py-3.5 text-gray-500 whitespace-nowrap">{job.salary_annual || '—'}</td>
                     <td className="px-5 py-3.5 text-gray-400 whitespace-nowrap">{job.date_applied ?? '—'}</td>
-                    <td className="px-5 py-3.5 text-gray-400 max-w-xs truncate">{job.notes || '—'}</td>
+                    <td className="px-5 py-3.5 text-gray-400 max-w-xs whitespace-normal break-words">{job.notes || '—'}</td>
                   </tr>
                 )
               })
           }
         </tbody>
       </table>
-    </div >
+    </div>
+  )
+
+  return (
+    <>
+      {mobileView}
+      {desktopView}
+    </>
   )
 }
