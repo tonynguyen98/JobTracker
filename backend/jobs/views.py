@@ -6,6 +6,9 @@ from .serializers import JobSerializer
 from .utils import load_jobs_from_content
 from .sanitizers import sanitize_job
 import math
+from datetime import date, timedelta
+from django.db.models import Count
+from django.db.models.functions import TruncDate
 
 
 @api_view(['GET'])
@@ -82,14 +85,62 @@ def job_stats(request):
     jobs = Job.objects.all()
     total = jobs.count()
 
+    # counts by status
     status_counts = {}
     for job in jobs:
         s = job.application_status or 'Unknown'
         status_counts[s] = status_counts.get(s, 0) + 1
 
+    # active pipeline — exclude terminal statuses
+    terminal = {'Accepted', 'Rejected', 'No Reply', 'Not Started'}
+    active = sum(v for k, v in status_counts.items() if k not in terminal)
+
+    # response rate — got any response vs total applied
+    responded = sum(v for k, v in status_counts.items() if k not in {'Not Started', 'Applied', 'No Reply'})
+    applied_total = total - status_counts.get('Not Started', 0)
+    response_rate = round((responded / applied_total) * 100) if applied_total > 0 else 0
+
+    # applications per day over last 30 days
+    thirty_days_ago = date.today() - timedelta(days=30)
+    daily = (
+        Job.objects
+        .filter(date_applied__gte=thirty_days_ago)
+        .annotate(day=TruncDate('date_applied'))
+        .values('day')
+        .annotate(count=Count('id'))
+        .order_by('day')
+    )
+    daily_counts = {
+        str(entry['day']): entry['count']
+        for entry in daily
+        if entry['day']
+    }
+
+    # fill in zero days for the full 30 day range
+    applications_over_time = []
+    for i in range(30):
+        day = thirty_days_ago + timedelta(days=i)
+        day_str = str(day)
+        applications_over_time.append({
+            'date': day_str,
+            'count': daily_counts.get(day_str, 0),
+        })
+
+    # top companies by application count
+    top_companies = (
+        Job.objects
+        .values('company_name')
+        .annotate(count=Count('id'))
+        .order_by('-count')[:5]
+    )
+
     return Response({
         'total': total,
+        'active': active,
+        'response_rate': response_rate,
         'by_status': status_counts,
+        'applications_over_time': applications_over_time,
+        'top_companies': list(top_companies),
     })
 
 

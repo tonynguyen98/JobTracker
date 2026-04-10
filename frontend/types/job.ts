@@ -19,11 +19,19 @@ export interface PaginatedJobs {
   total_pages: number;
 }
 
-export interface JobStats {
-  total: number;
-  by_status: Record<string, number>;
+export interface DailyCount {
+  date: string;
+  count: number;
 }
 
+export interface JobStats {
+  total: number;
+  active: number;
+  response_rate: number;
+  by_status: Record<string, number>;
+  applications_over_time: DailyCount[];
+  top_companies: { company_name: string; count: number }[];
+}
 export interface SyncResult {
   synced: number;
   created: number;

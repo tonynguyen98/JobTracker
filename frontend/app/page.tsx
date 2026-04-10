@@ -7,6 +7,7 @@ import JobTable from '@/components/JobTable'
 import StatCards from '@/components/StatCards'
 import JobModal from '@/components/JobModal'
 import CsvUploadButton from '@/components/CsvUploadButton'
+import Analytics from '@/components/Analytics'
 
 type ModalState =
   | { mode: 'closed' }
@@ -140,6 +141,8 @@ export default function Home() {
             onStatusClick={s => setActiveStatus(prev => prev === s ? '' : s)}
           />
         )}
+
+        {stats && <Analytics stats={stats} />}
 
         <div className="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
           <div className="px-5 py-3.5 border-b border-gray-100 flex items-center justify-between gap-3">
