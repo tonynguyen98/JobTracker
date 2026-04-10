@@ -11,6 +11,10 @@ export const STATUS_OPTIONS = [
   "No Reply",
 ];
 
+export const TYPE_OPTIONS = ["Full-Time", "Contract"];
+
+export const DEFAULT_STATUS_TEXT = "Not Started";
+
 const STATUS_MAP: Record<string, { bg: string; color: string }> = {
   "Not Started": { bg: "bg-gray-100", color: "#4b5563" },
   Applied: { bg: "bg-blue-100", color: "#1e40af" },

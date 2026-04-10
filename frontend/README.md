@@ -34,6 +34,7 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 - Responsive mobile card view
 - Add/edit/delete jobs through a modal form
 - CSV import with create/update/skip reporting
+- Backend sanitization and validation for job form and CSV input
 - Status summary cards and total application count
 
 ## Useful files

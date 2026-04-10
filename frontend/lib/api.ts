@@ -15,6 +15,7 @@ async function apiFetch<T>(path: string, options?: RequestInit): Promise<T> {
     ...options,
   });
   if (!res.ok) throw new Error(`API error ${res.status}: ${path}`);
+  if (options?.method === "DELETE") return undefined as T;
   return res.json();
 }
 

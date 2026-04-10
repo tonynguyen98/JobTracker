@@ -136,5 +136,6 @@ The app will be running at `http://localhost:3000`.
 - Sortable table columns on desktop
 - Responsive mobile card view
 - CSV import with create/update/skip feedback and toast notifications
+- Backend sanitization and validation of job data for forms and CSV uploads
 - Status badges, totals, and stats cards for quick insights
 - Backend REST API with detail, stats, and upload endpoints

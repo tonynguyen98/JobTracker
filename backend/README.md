@@ -96,5 +96,7 @@ The upload endpoint accepts a file upload under the `file` form field. It reads 
 ## Notes
 
 - `config/settings.py` loads environment variables from `backend/.env` using `python-dotenv`.
-- The `jobs` app serializes and validates incoming data for create/update operations.
+- The `jobs` app sanitizes user input and CSV upload data through `jobs/sanitizers.py`.
+- Job create/update requests validate required fields such as `company_name` and `job_title` and return clear 400 responses for invalid input.
+- CSV uploads normalize and validate fields like URLs, salary values, and application status, while skipping empty or malformed rows.
 - The backend API is used by the frontend through `NEXT_PUBLIC_API_URL=http://localhost:8000/api`.

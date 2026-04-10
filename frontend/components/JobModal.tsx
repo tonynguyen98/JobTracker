@@ -2,9 +2,7 @@
 
 import { useState } from 'react'
 import { Job } from '@/types/job'
-import { STATUS_OPTIONS } from '@/lib/constants'
-
-const TYPE_OPTIONS = ['Full-Time', 'Contract']
+import { STATUS_OPTIONS, TYPE_OPTIONS, DEFAULT_STATUS_TEXT } from '@/lib/constants'
 
 const EMPTY_FORM = {
   company_name: '',
@@ -13,8 +11,83 @@ const EMPTY_FORM = {
   date_applied: new Date().toISOString().split('T')[0],
   type_of_job: '',
   salary_annual: '',
-  application_status: 'Applied',
+  application_status: DEFAULT_STATUS_TEXT,
   notes: '',
+}
+
+// ---- Sanitizers ----
+
+function sanitizeText(val: string): string {
+  return val.trim().replace(/\s+/g, ' ')
+}
+
+function sanitizeUrl(val: string): string {
+  const trimmed = val.trim()
+  if (!trimmed) return ''
+  if (trimmed.startsWith('http://') || trimmed.startsWith('https://')) return trimmed
+  // if it looks like a URL but is missing protocol, add https
+  if (trimmed.includes('.') && !trimmed.includes(' ')) return `https://${trimmed}`
+  return trimmed
+}
+
+function formatSalary(raw: string): string {
+  if (!raw.trim()) return ''
+
+  // convert K/k shorthand to full numbers e.g. 120k -> 120000
+  const normalized = raw.replace(/(\d+(?:\.\d+)?)\s*[kK]\b/g, (_, n) => {
+    return String(Math.round(parseFloat(n) * 1000))
+  })
+
+  // extract all numbers
+  const nums = [...normalized.matchAll(/\$?\s*([\d,]+(?:\.\d+)?)/g)]
+    .map(m => Math.round(parseFloat(m[1].replace(/,/g, ''))))
+    .filter(n => !isNaN(n))
+
+  if (nums.length === 0) return raw.trim()
+
+  const fmt = (n: number) => '$' + n.toLocaleString('en-US')
+
+  return nums.length >= 2
+    ? `${fmt(nums[0])} - ${fmt(nums[1])}`
+    : fmt(nums[0])
+}
+
+// ---- Validators ----
+
+interface FormErrors {
+  company_name?: string
+  job_title?: string
+  job_link?: string
+  salary_annual?: string
+}
+
+function validate(form: typeof EMPTY_FORM): FormErrors {
+  const errors: FormErrors = {}
+
+  if (!form.company_name.trim()) {
+    errors.company_name = 'Company is required.'
+  }
+
+  if (!form.job_title.trim()) {
+    errors.job_title = 'Role is required.'
+  }
+
+  if (form.job_link.trim()) {
+    try {
+      new URL(sanitizeUrl(form.job_link))
+    } catch {
+      errors.job_link = 'Enter a valid URL.'
+    }
+  }
+
+  if (form.salary_annual.trim()) {
+    const nums = [...form.salary_annual.matchAll(/\$?\s*([\d,]+(?:\.\d+)?)/g)]
+    if (nums.length === 0) {
+      errors.salary_annual = 'Use a format like $120,000 or 100,000 - 140,000.'
+    }
+  }
+
+  return errors
 }
 
 interface Props {
@@ -32,25 +105,41 @@ export default function JobModal({ onClose, onSave, onDelete, initial, title = '
       Object.entries(initial ?? {}).filter(([, v]) => v !== null && v !== undefined)
     ),
   })
+  const [errors, setErrors] = useState<FormErrors>({})
   const [saving, setSaving] = useState(false)
   const [deleting, setDeleting] = useState(false)
-  const [error, setError] = useState('')
+  const [serverError, setServerError] = useState('')
 
-  const set = (field: string, val: string) =>
+  const set = (field: string, val: string) => {
     setForm(prev => ({ ...prev, [field]: val }))
+    // clear error on change
+    setErrors(prev => ({ ...prev, [field]: undefined }))
+  }
 
   const handleSave = async () => {
-    if (!form.company_name.trim() || !form.job_title.trim()) {
-      setError('Company and role are required.')
+    // sanitize before validating
+    const sanitized = {
+      ...form,
+      company_name: sanitizeText(form.company_name),
+      job_title: sanitizeText(form.job_title),
+      job_link: sanitizeUrl(form.job_link),
+      salary_annual: formatSalary(form.salary_annual),
+      notes: sanitizeText(form.notes),
+    }
+
+    const errs = validate(sanitized)
+    if (Object.keys(errs).length > 0) {
+      setErrors(errs)
       return
     }
+
     setSaving(true)
-    setError('')
+    setServerError('')
     try {
-      await onSave(form)
+      await onSave(sanitized)
       onClose()
     } catch {
-      setError('Something went wrong. Try again.')
+      setServerError('Something went wrong. Try again.')
     } finally {
       setSaving(false)
     }
@@ -62,14 +151,17 @@ export default function JobModal({ onClose, onSave, onDelete, initial, title = '
     try {
       await onDelete()
     } catch {
-      setError('Delete failed. Try again.')
+      setServerError('Delete failed. Try again.')
       setDeleting(false)
     }
   }
 
+  const fieldClass = (error?: string) =>
+    `w-full border ${error ? 'border-red-400' : 'border-gray-400'} bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 ${error ? 'focus:ring-red-300' : 'focus:ring-gray-400'}`
+
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
-      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6">
+      <div className="bg-white rounded-2xl shadow-xl w-full max-w-lg mx-4 p-6 max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-5">
           <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600 text-xl leading-none">✕</button>
@@ -81,9 +173,10 @@ export default function JobModal({ onClose, onSave, onDelete, initial, title = '
             <input
               value={form.company_name}
               onChange={e => set('company_name', e.target.value)}
-              className="w-full border border-gray-400 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              className={fieldClass(errors.company_name)}
               placeholder="Acme Corp"
             />
+            {errors.company_name && <p className="text-red-500 text-xs mt-1">{errors.company_name}</p>}
           </div>
 
           <div className="col-span-2 sm:col-span-1">
@@ -91,9 +184,10 @@ export default function JobModal({ onClose, onSave, onDelete, initial, title = '
             <input
               value={form.job_title}
               onChange={e => set('job_title', e.target.value)}
-              className="w-full border border-gray-400 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              className={fieldClass(errors.job_title)}
               placeholder="Software Engineer"
             />
+            {errors.job_title && <p className="text-red-500 text-xs mt-1">{errors.job_title}</p>}
           </div>
 
           <div className="col-span-2">
@@ -101,9 +195,10 @@ export default function JobModal({ onClose, onSave, onDelete, initial, title = '
             <input
               value={form.job_link}
               onChange={e => set('job_link', e.target.value)}
-              className="w-full border border-gray-400 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              className={fieldClass(errors.job_link)}
               placeholder="https://..."
             />
+            {errors.job_link && <p className="text-red-500 text-xs mt-1">{errors.job_link}</p>}
           </div>
 
           <div>
@@ -111,7 +206,8 @@ export default function JobModal({ onClose, onSave, onDelete, initial, title = '
             <select
               value={form.application_status}
               onChange={e => set('application_status', e.target.value)}
-              className="w-full border border-gray-400 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-400"            >
+              className={fieldClass()}
+            >
               {STATUS_OPTIONS.map(s => <option key={s}>{s}</option>)}
             </select>
           </div>
@@ -121,7 +217,7 @@ export default function JobModal({ onClose, onSave, onDelete, initial, title = '
             <select
               value={form.type_of_job}
               onChange={e => set('type_of_job', e.target.value)}
-              className="w-full border border-gray-400 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-900 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              className={fieldClass()}
             >
               <option value="">—</option>
               {TYPE_OPTIONS.map(t => <option key={t}>{t}</option>)}
@@ -134,7 +230,7 @@ export default function JobModal({ onClose, onSave, onDelete, initial, title = '
               type="date"
               value={form.date_applied}
               onChange={e => set('date_applied', e.target.value)}
-              className="w-full border border-gray-400 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
+              className={fieldClass()}
             />
           </div>
 
@@ -143,9 +239,11 @@ export default function JobModal({ onClose, onSave, onDelete, initial, title = '
             <input
               value={form.salary_annual}
               onChange={e => set('salary_annual', e.target.value)}
-              className="w-full border border-gray-400 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400"
-              placeholder="$120,000"
+              onBlur={e => set('salary_annual', formatSalary(e.target.value))}
+              className={fieldClass(errors.salary_annual)}
+              placeholder="120k - 140k"
             />
+            {errors.salary_annual && <p className="text-red-500 text-xs mt-1">{errors.salary_annual}</p>}
           </div>
 
           <div className="col-span-2">
@@ -154,13 +252,13 @@ export default function JobModal({ onClose, onSave, onDelete, initial, title = '
               value={form.notes}
               onChange={e => set('notes', e.target.value)}
               rows={3}
-              className="w-full border border-gray-400 bg-gray-50 rounded-lg px-3 py-2 text-sm text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-gray-400 resize-none"
+              className={`${fieldClass()} resize-none`}
               placeholder="Recruiter name, referral, next steps..."
             />
           </div>
         </div>
 
-        {error && <p className="text-red-500 text-xs mt-3">{error}</p>}
+        {serverError && <p className="text-red-500 text-xs mt-3">{serverError}</p>}
 
         <div className="flex items-center justify-between mt-6">
           <div>

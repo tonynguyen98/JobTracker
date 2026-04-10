@@ -4,6 +4,7 @@ from rest_framework import status
 from .models import Job
 from .serializers import JobSerializer
 from .utils import load_jobs_from_content
+from .sanitizers import sanitize_job
 import math
 
 
@@ -23,7 +24,7 @@ def job_list(request):
                jobs.filter(job_title__icontains=search)
 
     total = jobs.count()
-    total_pages = math.ceil(total / page_size)
+    total_pages = math.ceil(total / page_size) if page_size else 1
     start = (page - 1) * page_size
     end = start + page_size
 
@@ -36,9 +37,17 @@ def job_list(request):
         'total_pages': total_pages,
     })
 
+
 @api_view(['POST'])
 def job_create(request):
-    serializer = JobSerializer(data=request.data)
+    clean = sanitize_job(request.data)
+
+    if not clean['company_name']:
+        return Response({'error': 'Company name is required.'}, status=status.HTTP_400_BAD_REQUEST)
+    if not clean['job_title']:
+        return Response({'error': 'Job title is required.'}, status=status.HTTP_400_BAD_REQUEST)
+
+    serializer = JobSerializer(data=clean)
     if serializer.is_valid():
         serializer.save()
         return Response(serializer.data, status=status.HTTP_201_CREATED)
@@ -56,7 +65,8 @@ def job_detail(request, pk):
         return Response(JobSerializer(job).data)
 
     if request.method == 'PATCH':
-        serializer = JobSerializer(job, data=request.data, partial=True)
+        clean = sanitize_job({**JobSerializer(job).data, **request.data})
+        serializer = JobSerializer(job, data=clean, partial=True)
         if serializer.is_valid():
             serializer.save()
             return Response(serializer.data)
@@ -82,6 +92,7 @@ def job_stats(request):
         'by_status': status_counts,
     })
 
+
 @api_view(['POST'])
 def upload_csv(request):
     file = request.FILES.get('file')
@@ -97,8 +108,12 @@ def upload_csv(request):
     if not rows:
         return Response({'error': 'CSV is empty or has no matching columns'}, status=status.HTTP_400_BAD_REQUEST)
 
+    # sanitize every row from the CSV
+    rows = [sanitize_job(row) for row in rows]
 
-    # pull existing jobs into a lookup dict keyed by (company, title, date)
+    # skip rows that came out empty after sanitization
+    rows = [r for r in rows if r.get('company_name')]
+
     existing = Job.objects.all()
     existing_map = {
         (j.company_name.lower(), j.job_title.lower(), str(j.date_applied)): j
@@ -113,7 +128,6 @@ def upload_csv(request):
     created = 0
     updated = 0
     skipped = 0
-
     jobs_to_create = []
     jobs_to_update = []
 
