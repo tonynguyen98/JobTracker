@@ -1,8 +1,7 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useRef, useState, useEffect } from 'react'
 import { uploadCsv } from '@/lib/api'
-import { UploadResult } from '@/types/job'
 
 interface Props {
   onComplete: () => void
@@ -11,53 +10,61 @@ interface Props {
 export default function CsvUploadButton({ onComplete }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<UploadResult | null>(null)
-  const [error, setError] = useState('')
+  const [toast, setToast] = useState<{ message: string; type: 'success' | 'error' } | null>(null)
+
+  useEffect(() => {
+    if (!toast) return
+    const t = setTimeout(() => setToast(null), 4000)
+    return () => clearTimeout(t)
+  }, [toast])
 
   const handleFile = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
     if (!file) return
 
     setLoading(true)
-    setResult(null)
-    setError('')
+    setToast(null)
 
     try {
       const res = await uploadCsv(file)
-      setResult(res)
+      setToast({
+        type: 'success',
+        message: `${res.created} added · ${res.updated} updated · ${res.skipped} unchanged`,
+      })
       onComplete()
     } catch {
-      setError('Upload failed. Make sure the CSV matches the expected format.')
+      setToast({ type: 'error', message: 'Import failed. Check the CSV format.' })
     } finally {
       setLoading(false)
-      // reset so the same file can be re-uploaded if needed
       if (inputRef.current) inputRef.current.value = ''
     }
   }
 
   return (
-    <div className="flex flex-col items-end gap-1">
-      {(result || error) && !loading && (
-        <span className={`text-xs ${error ? 'text-red-500' : 'text-gray-400'} hidden sm:block`}>
-          {error || `${result!.created} added · ${result!.updated} updated · ${result!.skipped} unchanged`}
-        </span>
+    <>
+      <input ref={inputRef} type="file" accept=".csv" className="hidden" onChange={handleFile} />
+      <button
+        onClick={() => inputRef.current?.click()}
+        disabled={loading}
+        className="border border-gray-300 text-gray-700 text-sm px-3 sm:px-4 py-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-50 transition-colors whitespace-nowrap"
+      >
+        {loading ? 'Importing...' : (
+          <>
+            <span className="sm:hidden">CSV</span>
+            <span className="hidden sm:inline">Import CSV</span>
+          </>
+        )}
+      </button>
+
+      {/* Toast */}
+      {toast && (
+        <div className={`fixed bottom-5 left-1/2 -translate-x-1/2 z-50 px-4 py-2.5 rounded-xl shadow-lg text-sm font-medium transition-all whitespace-nowrap ${toast.type === 'success'
+            ? 'bg-gray-900 text-white'
+            : 'bg-red-500 text-white'
+          }`}>
+          {toast.message}
+        </div>
       )}
-      <div className="flex items-center">
-        <input
-          ref={inputRef}
-          type="file"
-          accept=".csv"
-          className="hidden"
-          onChange={handleFile}
-        />
-        <button
-          onClick={() => inputRef.current?.click()}
-          disabled={loading}
-          className="border border-gray-300 text-gray-700 text-sm px-3 sm:px-4 py-1.5 rounded-lg hover:bg-gray-100 disabled:opacity-50 transition-colors whitespace-nowrap"
-        >
-          {loading ? 'Importing...' : <><span className="sm:hidden">CSV</span><span className="hidden sm:inline">Import CSV</span></>}
-        </button>
-      </div>
-    </div>
+    </>
   )
 }
