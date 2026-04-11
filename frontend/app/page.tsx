@@ -33,6 +33,7 @@ export default function Home() {
   const fetchJobs = useCallback(async () => {
     setLoading(true)
     setPage(1)
+    setHasMore(false) // prevent loadMore firing during refetch
     try {
       const data = await getJobs({ status: activeStatus, search, page: 1, page_size: PAGE_SIZE })
       setJobs(data.results)
@@ -49,7 +50,11 @@ export default function Home() {
     const nextPage = page + 1
     try {
       const data = await getJobs({ status: activeStatus, search, page: nextPage, page_size: PAGE_SIZE })
-      setJobs(prev => [...prev, ...data.results])
+      setJobs(prev => {
+        const existingIds = new Set(prev.map(j => j.id))
+        const newJobs = data.results.filter(j => !existingIds.has(j.id))
+        return [...prev, ...newJobs]
+      })
       setPage(nextPage)
       setHasMore(nextPage < data.total_pages)
     } finally {
