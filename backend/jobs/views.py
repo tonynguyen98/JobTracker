@@ -12,7 +12,7 @@ from django.db.models import Count
 
 @api_view(['GET'])
 def job_list(request):
-    jobs = Job.objects.all().order_by('-created_at')
+    jobs = Job.objects.all().order_by('-date_applied', '-id') 
 
     status_filter = request.query_params.get('status')
     search = request.query_params.get('search')
