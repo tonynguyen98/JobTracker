@@ -1,7 +1,7 @@
 'use client'
 
 import { JobStats } from '@/types/job'
-import { getStatusStyle } from '@/lib/constants'
+import { getStatusStyle, orderStatusEntries } from '@/lib/constants'
 
 interface Props {
   stats: JobStats
@@ -78,7 +78,7 @@ export default function Analytics({ stats }: Props) {
         top.push(noOffer)
       }
     }
-    return top
+    return orderStatusEntries(top)
   })()
 
   const totalApplied = stats.total - (stats.by_status['Not Started'] ?? 0)

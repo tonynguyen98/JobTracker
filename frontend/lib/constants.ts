@@ -1,17 +1,33 @@
 export const STATUS_OPTIONS = [
   "Not Started",
   "Applied",
-  "Coding Assessment",
   "Contacted",
+  "Coding Assessment",
   "Interview Scheduled",
   "Wait Next Round",
   "Next Round Confirmed",
   "Interviewed",
   "No Offer",
-  "Accepted",
   "Rejected",
   "No Reply",
+  "Accepted",
 ];
+
+export function orderStatusEntries<T>(entries: [string, T][]) {
+  return [...entries].sort(([a], [b]) => {
+    const aIndex = STATUS_OPTIONS.indexOf(a);
+    const bIndex = STATUS_OPTIONS.indexOf(b);
+
+    if (aIndex !== -1 || bIndex !== -1) {
+      return (
+        (aIndex !== -1 ? aIndex : Number.MAX_SAFE_INTEGER) -
+        (bIndex !== -1 ? bIndex : Number.MAX_SAFE_INTEGER)
+      );
+    }
+
+    return a.localeCompare(b);
+  });
+}
 
 export const TYPE_OPTIONS = ["Full-Time", "Contract"];
 

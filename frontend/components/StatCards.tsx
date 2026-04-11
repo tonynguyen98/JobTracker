@@ -1,5 +1,5 @@
 import { JobStats } from '@/types/job'
-import { getStatusStyle } from '@/lib/constants'
+import { getStatusStyle, orderStatusEntries } from '@/lib/constants'
 
 interface Props {
   stats: JobStats
@@ -8,13 +8,15 @@ interface Props {
 }
 
 export default function StatCards({ stats, activeStatus, onStatusClick }: Props) {
+  const orderedStatuses = orderStatusEntries(Object.entries(stats.by_status))
+
   return (
     <div className="grid grid-cols-2 sm:flex sm:flex-wrap gap-3">
       <button
         onClick={() => onStatusClick('')}
         className={`rounded-xl px-4 py-3.5 sm:px-5 sm:py-4 text-left border transition-all sm:min-w-[100px] ${activeStatus === ''
-            ? 'bg-gray-900 border-gray-900 shadow-sm'
-            : 'bg-white border-gray-200 hover:border-gray-300 shadow-sm'
+          ? 'bg-gray-900 border-gray-900 shadow-sm'
+          : 'bg-white border-gray-200 hover:border-gray-300 shadow-sm'
           }`}
       >
         <div className={`text-xl sm:text-2xl font-bold tracking-tight ${activeStatus === '' ? 'text-white' : 'text-gray-900'}`}>
@@ -25,7 +27,7 @@ export default function StatCards({ stats, activeStatus, onStatusClick }: Props)
         </div>
       </button>
 
-      {Object.entries(stats.by_status).map(([status, count]) => {
+      {orderedStatuses.map(([status, count]) => {
         const { bg, color } = getStatusStyle(status)
         const isActive = activeStatus === status
         return (
@@ -33,8 +35,8 @@ export default function StatCards({ stats, activeStatus, onStatusClick }: Props)
             key={status}
             onClick={() => onStatusClick(status)}
             className={`rounded-xl px-4 py-3.5 sm:px-5 sm:py-4 text-left border transition-all sm:min-w-[140px] shadow-sm ${isActive
-                ? 'bg-gray-900 border-gray-900'
-                : 'bg-white border-gray-200 hover:border-gray-300'
+              ? 'bg-gray-900 border-gray-900'
+              : 'bg-white border-gray-200 hover:border-gray-300'
               }`}
           >
             <div className={`text-xl sm:text-2xl font-bold tracking-tight ${isActive ? 'text-white' : 'text-gray-900'}`}>
