@@ -332,3 +332,24 @@ class JobEndpointTests(APITestCase):
         self.assertEqual(existing_job.job_link, 'https://linkedin.com')
 
         self.assertTrue(Job.objects.filter(company_name='NewCo', job_title='Product Manager').exists())
+
+    def test_upload_csv_accepts_long_job_links(self):
+        long_url = 'https://secure4.saashr.com/ta/6165823.careers?ShowJob=855914963&' + 'x' * 180
+        content = '\n'.join([
+            'Job Tracker CSV',
+            'Company Name,Job Link,Job Title,Date Applied,Type of Job,Salary (Annual),Application Status,Notes',
+            f'ZyWave,{long_url},Senior Software Engineer - Auth,"{self.today.strftime("%B %d, %Y")}",Full-Time,,Applied,',
+        ])
+
+        uploaded_file = SimpleUploadedFile('jobs.csv', content.encode('utf-8'), content_type='text/csv')
+        url = reverse('upload-csv')
+        response = self.client.post(url, {'file': uploaded_file}, format='multipart')
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['total_in_csv'], 1)
+        self.assertEqual(response.data['created'], 1)
+        self.assertEqual(response.data['updated'], 0)
+        self.assertEqual(response.data['skipped'], 0)
+
+        job = Job.objects.get(company_name='ZyWave', job_title='Senior Software Engineer - Auth')
+        self.assertEqual(job.job_link, long_url)

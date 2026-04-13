@@ -3,7 +3,7 @@ from django.utils import timezone
 
 class Job(models.Model):
     company_name = models.CharField(max_length=255)
-    job_link = models.URLField(blank=True)
+    job_link = models.URLField(max_length=2000, blank=True)
     job_title = models.CharField(max_length=255)
     date_applied = models.DateField(null=True, blank=True)
     type_of_job = models.CharField(max_length=100, blank=True)
