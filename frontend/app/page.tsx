@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useCallback, useRef } from 'react'
+import Link from 'next/link'
 import { getAllJobs, getJobs, getStats, createJob, updateJob, deleteJob } from '@/lib/api'
 import { Job, JobStats } from '@/types/job'
 import JobTable from '@/components/JobTable'
@@ -168,7 +169,7 @@ export default function Home() {
     <div className="min-h-screen" style={{ background: '#f1f5f9' }}>
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-screen-xl mx-auto px-6 py-3 flex flex-wrap items-center justify-between gap-3">
-          <div className="flex items-center gap-3 min-w-0">
+          <Link href="/" className="flex items-center gap-3 min-w-0 hover:opacity-75 transition-opacity">
             <div className="w-7 h-7 rounded-lg bg-gray-900 flex items-center justify-center">
               <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
                 <rect x="1" y="1" width="5" height="5" rx="1" fill="white" />
@@ -183,7 +184,7 @@ export default function Home() {
                 {stats.total} applications
               </span>
             )}
-          </div>
+          </Link>
           <div className="flex items-center gap-2">
             <div className="hidden sm:flex items-center gap-2">
               <button
