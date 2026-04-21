@@ -7,9 +7,9 @@ export const STATUS_OPTIONS = [
   "Interview Scheduled",
   "Interviewed",
   "Wait Next Round",
+  "No Reply",
   "No Offer",
   "Rejected",
-  "No Reply",
   "Accepted",
 ];
 
@@ -45,7 +45,7 @@ const STATUS_MAP: Record<string, { bg: string; color: string }> = {
   "No Offer": { bg: "bg-rose-100", color: "#9d174d" },
   Accepted: { bg: "bg-green-100", color: "#14532d" },
   Rejected: { bg: "bg-red-100", color: "#7f1d1d" },
-  "No Reply": { bg: "bg-gray-100", color: "#374151" },
+  "No Reply": { bg: "bg-pink-100", color: "#ce6d6d" },
 };
 
 const DEFAULT_STATUS = { bg: "bg-gray-100", color: "#4b5563" };
