@@ -69,17 +69,7 @@ export default function Analytics({ stats }: Props) {
     .filter(([, count]) => count > 0)
     .sort((a, b) => b[1] - a[1])
 
-  const statusBreakdown = (() => {
-    const top = activeStatuses.slice(0, 6)
-    if (!top.some(([status]) => status === 'No Offer')) {
-      const noOffer = activeStatuses.find(([status]) => status === 'No Offer')
-      if (noOffer) {
-        top.pop()
-        top.push(noOffer)
-      }
-    }
-    return orderStatusEntries(top)
-  })()
+  const statusBreakdown = orderStatusEntries(activeStatuses)
 
   const totalApplied = stats.total - (stats.by_status['Not Started'] ?? 0)
   const thisWeek = stats.applications_over_time
