@@ -24,14 +24,22 @@ export interface DailyCount {
   count: number;
 }
 
+export interface WeeklyCount {
+  week: string;
+  count: number;
+  label: string;
+}
+
 export interface JobStats {
   total: number;
   active: number;
   response_rate: number;
   by_status: Record<string, number>;
   applications_over_time: DailyCount[];
+  weekly_applications: WeeklyCount[];
   top_companies: { company_name: string; count: number }[];
 }
+
 export interface SyncResult {
   synced: number;
   created: number;

@@ -8,6 +8,7 @@ from .sanitizers import sanitize_job
 import math
 from datetime import date, timedelta
 from django.db.models import Count
+from django.db.models.functions import TruncWeek, TruncDate
 
 
 @api_view(['GET'])
@@ -99,38 +100,54 @@ def job_stats(request):
     applied_total = total - status_counts.get('Not Started', 0)
     response_rate = round((responded / applied_total) * 100) if applied_total > 0 else 0
 
-    # applications per day over last 30 days, including today
-    thirty_days_ago = date.today() - timedelta(days=29)
+    # daily — last 30 days
+    thirty_days_ago = date.today() - timedelta(days=30)
     daily = (
         Job.objects
         .filter(date_applied__gte=thirty_days_ago)
-        .values('date_applied')
+        .annotate(day=TruncDate('date_applied'))
+        .values('day')
         .annotate(count=Count('id'))
-        .order_by('date_applied')
+        .order_by('day')
     )
-    daily_counts = {
-        str(entry['date_applied']): entry['count']
-        for entry in daily
-        if entry['date_applied']
-    }
-
-    # fill in zero days for the full 30 day range
+    daily_counts = {str(entry['day']): entry['count'] for entry in daily if entry['day']}
     applications_over_time = []
     for i in range(30):
         day = thirty_days_ago + timedelta(days=i)
         day_str = str(day)
-        applications_over_time.append({
-            'date': day_str,
-            'count': daily_counts.get(day_str, 0),
-        })
+        applications_over_time.append({'date': day_str, 'count': daily_counts.get(day_str, 0)})
 
-    # top companies by application count
-    top_companies = (
-        Job.objects
-        .values('company_name')
-        .annotate(count=Count('id'))
-        .order_by('-count')[:5]
-    )
+    # weekly — from earliest application to now
+    earliest = Job.objects.filter(date_applied__isnull=False).order_by('date_applied').first()
+    weekly_data = []
+    if earliest and earliest.date_applied:
+        weekly = (
+            Job.objects
+            .filter(date_applied__isnull=False)
+            .annotate(week=TruncWeek('date_applied'))
+            .values('week')
+            .annotate(count=Count('id'))
+            .order_by('week')
+        )
+
+        weekly_map = {
+            str(entry['week'].date() if hasattr(entry['week'], 'date') else entry['week']): entry['count']
+            for entry in weekly if entry['week']
+        }
+        
+        # fill all weeks from start to today
+        start = earliest.date_applied
+        # rewind to Monday of that week
+        start = start - timedelta(days=start.weekday())
+        current = start
+        while current <= date.today():
+            week_str = str(current)
+            weekly_data.append({
+                'week': week_str,
+                'count': weekly_map.get(week_str, 0),
+                'label': current.strftime('%-m/%-d'),
+            })
+            current += timedelta(weeks=1)
 
     return Response({
         'total': total,
@@ -138,7 +155,8 @@ def job_stats(request):
         'response_rate': response_rate,
         'by_status': status_counts,
         'applications_over_time': applications_over_time,
-        'top_companies': list(top_companies),
+        'weekly_applications': weekly_data,
+        'top_companies': [],
     })
 
 
