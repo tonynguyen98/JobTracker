@@ -8,7 +8,7 @@ from .sanitizers import sanitize_job
 import math
 from datetime import date, timedelta
 from django.db.models import Count
-from django.db.models.functions import TruncWeek, TruncDate
+from collections import Counter
 
 
 @api_view(['GET'])
@@ -82,72 +82,68 @@ def job_detail(request, pk):
 
 @api_view(['GET'])
 def job_stats(request):
-    jobs = Job.objects.all()
-    total = jobs.count()
+    # 1. Fetch data efficiently
+    # We fetch only the fields we need to keep memory usage low
+    jobs_data = Job.objects.values('application_status', 'date_applied')
+    total = jobs_data.count()
 
-    # counts by status
+    # 2. Status counts & Pipeline Logic (One pass through the data)
     status_counts = {}
-    for job in jobs:
-        s = job.application_status or 'Unknown'
+    applied_dates = []
+    
+    for job in jobs_data:
+        # Status counts
+        s = job['application_status'] or 'Unknown'
         status_counts[s] = status_counts.get(s, 0) + 1
+        
+        # Collect dates for later processing
+        if job['date_applied']:
+            applied_dates.append(job['date_applied'])
 
-    # active pipeline — exclude terminal statuses
+    # Active pipeline & Response rate
     terminal = {'Accepted', 'Rejected', 'No Reply', 'Not Started', 'No Offer'}
     active = sum(v for k, v in status_counts.items() if k not in terminal)
-
-    # response rate — got any response vs total applied
+    
     responded = sum(v for k, v in status_counts.items() if k not in {'Not Started', 'Applied', 'No Reply'})
     applied_total = total - status_counts.get('Not Started', 0)
     response_rate = round((responded / applied_total) * 100) if applied_total > 0 else 0
 
-    # daily — last 30 days
+    # 3. Daily Stats (Last 30 days) - Processed in Python
     thirty_days_ago = date.today() - timedelta(days=30)
-    daily = (
-        Job.objects
-        .filter(date_applied__gte=thirty_days_ago)
-        .annotate(day=TruncDate('date_applied'))
-        .values('day')
-        .annotate(count=Count('id'))
-        .order_by('day')
-    )
-    daily_counts = {str(entry['day']): entry['count'] for entry in daily if entry['day']}
+    # Filter dates and count occurrences using Counter
+    recent_dates = [d for d in applied_dates if d >= thirty_days_ago]
+    daily_map = Counter(recent_dates)
+    
     applications_over_time = []
     for i in range(30):
         day = thirty_days_ago + timedelta(days=i)
-        day_str = str(day)
-        applications_over_time.append({'date': day_str, 'count': daily_counts.get(day_str, 0)})
+        applications_over_time.append({
+            'date': str(day), 
+            'count': daily_map.get(day, 0)
+        })
 
-    # weekly — from earliest application to now
-    earliest = Job.objects.filter(date_applied__isnull=False).order_by('date_applied').first()
+    # 4. Weekly Stats - Processed in Python
     weekly_data = []
-    if earliest and earliest.date_applied:
-        weekly = (
-            Job.objects
-            .filter(date_applied__isnull=False)
-            .annotate(week=TruncWeek('date_applied'))
-            .values('week')
-            .annotate(count=Count('id'))
-            .order_by('week')
-        )
-
-        weekly_map = {
-            str(entry['week'].date() if hasattr(entry['week'], 'date') else entry['week']): entry['count']
-            for entry in weekly if entry['week']
-        }
+    if applied_dates:
+        # Group all dates by their respective Monday
+        weekly_map = Counter()
+        for d in applied_dates:
+            monday = d - timedelta(days=d.weekday())
+            weekly_map[monday] += 1
         
-        # fill all weeks from start to today
-        start = earliest.date_applied
-        # rewind to Monday of that week
-        start = start - timedelta(days=start.weekday())
-        current = start
-        while current <= date.today():
-            week_str = str(current)
+        # Fill all weeks from the first application to today
+        earliest_date = min(applied_dates)
+        start_week = earliest_date - timedelta(days=earliest_date.weekday())
+        
+        current_week = start_week
+        today = date.today()
+        while current_week <= today:
             weekly_data.append({
-                'week': week_str,
-                'count': weekly_map.get(week_str, 0),
-                'label': current.strftime('%-m/%-d'),
+                'week': str(current_week),
+                'count': weekly_map.get(current_week, 0),
+                'label': current_week.strftime('%-m/%-d'),
             })
-            current += timedelta(weeks=1)
+            current_week += timedelta(weeks=1)
 
     return Response({
         'total': total,

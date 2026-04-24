@@ -1,131 +1,17 @@
 'use client'
 
-import { JobStats, WeeklyCount } from '@/types/job'
+import { useState } from 'react'
+import { DailyCount, JobStats, WeeklyCount } from '@/types/job'
 import { getStatusStyle, orderStatusEntries } from '@/lib/constants'
 
 interface Props {
   stats: JobStats
 }
 
-function BarChart({ data }: { data: { date: string; count: number }[] }) {
-  const max = Math.max(...data.map(d => Number(d.count)), 1)
-  return (
-    <div className="flex items-end gap-px h-16 w-full">
-      {data.map((d) => {
-        const pct = (Number(d.count) / max) * 100
-        return (
-          <div key={d.date} className="flex flex-col items-center flex-1 h-full group relative">
-            {/* Added h-full above ^ */}
-            <div className="flex-1 w-full" /> {/* Spacer to push bar to bottom */}
-            <div
-              className="w-full bg-indigo-100 hover:bg-indigo-300 rounded-sm transition-all cursor-default"
-              style={{
-                height: `${pct}%`,
-                minHeight: d.count > 0 ? '4px' : '1px'
-              }}
-            />
-            {d.count > 0 && (
-              <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-1.5 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                {d.count} on {d.date.slice(5)}
-              </div>
-            )}
-          </div>
-        )
-      })}
-    </div>
-  )
-}
-
-function WeeklyTrendChart({ data }: { data: WeeklyCount[] }) {
-  const max = Math.max(...data.map(d => Number(d.count)), 1)
-  const avg = data.length > 0 ? Math.round(data.reduce((s, d) => s + d.count, 0) / data.length) : 0
-  const last4 = data.slice(-4)
-  const prev4 = data.slice(-8, -4)
-  const last4avg = last4.length > 0 ? last4.reduce((s, d) => s + d.count, 0) / last4.length : 0
-  const prev4avg = prev4.length > 0 ? prev4.reduce((s, d) => s + d.count, 0) / prev4.length : 0
-  const trend = prev4avg > 0 ? Math.round(((last4avg - prev4avg) / prev4avg) * 100) : 0
-  const trendUp = trend >= 0
-
-  // show last 12 weeks max, scrollable context
-  const visible = data.slice(-12)
-
-  return (
-    <div>
-      <div className="flex items-center justify-between mb-3">
-        <div>
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Weekly applications</p>
-          <p className="text-2xl font-bold text-gray-900 mt-0.5">{avg} <span className="text-sm font-normal text-gray-400">avg / week</span></p>
-        </div>
-        <div className="text-right">
-          <p className="text-xs text-gray-400 mb-1">vs prev 4 weeks</p>
-          <span className={`text-sm font-bold px-2 py-1 rounded-lg ${trendUp ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-600'}`}>
-            {trendUp ? '↑' : '↓'} {Math.abs(trend)}%
-          </span>
-        </div>
-      </div>
-
-      {/* bar chart */}
-      <div className="flex items-end gap-1 h-20 w-full mb-1">
-        {visible.map((d, i) => {
-          const pct = (Number(d.count) / max) * 100
-          const isRecent = i >= visible.length - 4
-          return (
-            <div key={d.week} className="flex flex-col items-center flex-1 h-full group relative">
-              {/* Added h-full above ^ */}
-              <div className="flex-1 w-full" /> {/* Spacer */}
-              <div
-                className={`w-full rounded-t-sm transition-all cursor-default ${isRecent ? 'bg-indigo-400 hover:bg-indigo-500' : 'bg-indigo-100 hover:bg-indigo-200'
-                  }`}
-                style={{
-                  height: `${pct}%`,
-                  minHeight: d.count > 0 ? '6px' : '1px'
-                }}
-              />
-              {d.count > 0 && (
-                <div className="absolute bottom-full mb-1 left-1/2 -translate-x-1/2 bg-gray-900 text-white text-xs px-1.5 py-0.5 rounded whitespace-nowrap opacity-0 group-hover:opacity-100 transition-opacity pointer-events-none z-10">
-                  {d.count} week of {d.label}
-                </div>
-              )}
-            </div>
-          )
-        })}
-      </div>
-
-      {/* week labels */}
-      <div className="flex justify-between">
-        <span className="text-xs text-gray-300">{visible[0]?.label}</span>
-        <span className="text-xs text-gray-400 font-medium">last 4 wks highlighted</span>
-        <span className="text-xs text-gray-300">{visible[visible.length - 1]?.label}</span>
-      </div>
-
-      {/* all-time summary row */}
-      <div className="flex gap-4 mt-3 pt-3 border-t border-gray-100">
-        <div>
-          <p className="text-xs text-gray-400">Total weeks</p>
-          <p className="text-sm font-semibold text-gray-700">{data.length}</p>
-        </div>
-        <div>
-          <p className="text-xs text-gray-400">Best week</p>
-          <p className="text-sm font-semibold text-gray-700">
-            {Math.max(...data.map(d => d.count))} apps
-          </p>
-        </div>
-        <div>
-          <p className="text-xs text-gray-400">This week</p>
-          <p className="text-sm font-semibold text-indigo-600">
-            {data[data.length - 1]?.count ?? 0} apps
-          </p>
-        </div>
-        <div>
-          <p className="text-xs text-gray-400">Avg / week</p>
-          <p className="text-sm font-semibold text-gray-700">{avg}</p>
-        </div>
-      </div>
-    </div>
-  )
-}
-
 export default function Analytics({ stats }: Props) {
+  const [view, setView] = useState<'daily' | 'weekly'>('daily')
+
+  // Data Processing
   const activeStatuses = Object.entries(stats.by_status)
     .filter(([, count]) => count > 0)
     .sort((a, b) => b[1] - a[1])
@@ -136,77 +22,120 @@ export default function Analytics({ stats }: Props) {
     .slice(-7)
     .reduce((sum, d) => sum + d.count, 0)
 
+  // Chart Logic
+  const chartData = view === 'daily'
+    ? stats.applications_over_time
+    : stats.weekly_applications.slice(-12) // Show last 12 weeks for clarity
+
+  const max = Math.max(...chartData.map(d => Number('count' in d ? d.count : 0)), 1)
+
   return (
-    <div className="space-y-3">
-      {/* row 1 — daily + pipeline + status */}
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
-        {/* daily chart */}
-        <div className="sm:col-span-2 bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-4">
-          <div className="flex items-center justify-between mb-3">
+    <div className="space-y-4">
+      {/* --- TOP METRICS ROW --- */}
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+        {[
+          { label: 'Total Applied', val: totalApplied },
+          { label: 'Active Pipeline', val: stats.active, sub: 'in progress' },
+          { label: 'Response Rate', val: `${stats.response_rate}%`, progress: stats.response_rate },
+          { label: 'This Week', val: thisWeek, color: 'text-indigo-600' }
+        ].map((stat, i) => (
+          <div key={i} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4">
+            <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">{stat.label}</p>
+            <p className={`text-2xl font-bold mt-1 ${stat.color || 'text-gray-900'}`}>{stat.val}</p>
+            {stat.sub && <p className="text-xs text-gray-400 mt-1">{stat.sub}</p>}
+            {stat.progress !== undefined && (
+              <div className="h-1.5 w-full bg-gray-100 rounded-full mt-3 overflow-hidden">
+                <div className="h-full bg-indigo-400 rounded-full" style={{ width: `${stat.progress}%` }} />
+              </div>
+            )}
+          </div>
+        ))}
+      </div>
+
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-4">
+        {/* --- UNIFIED ACTIVITY CHART (Left 2/3) --- */}
+        <div className="lg:col-span-2 bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden flex flex-col">
+          <div className="px-5 py-4 border-b border-gray-50 flex items-center justify-between">
             <div>
-              <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Applications — last 30 days</p>
-              <p className="text-2xl font-bold text-gray-900 mt-0.5">{totalApplied}</p>
+              <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest">Application Velocity</h3>
+              <p className="text-sm text-gray-500 mt-0.5">
+                {view === 'daily' ? 'Last 30 days daily volume' : 'Last 12 weeks momentum'}
+              </p>
             </div>
-            <div className="text-right">
-              <p className="text-xs text-gray-400">This week</p>
-              <p className="text-lg font-bold text-indigo-500">{thisWeek}</p>
+            <div className="flex bg-gray-100 p-1 rounded-lg">
+              {(['daily', 'weekly'] as const).map((v) => (
+                <button
+                  key={v}
+                  onClick={() => setView(v)}
+                  className={`px-3 py-1 text-xs font-medium rounded-md transition-all ${view === v ? 'bg-white text-indigo-600 shadow-sm' : 'text-gray-500 hover:text-gray-700'
+                    }`}
+                >
+                  {v.charAt(0).toUpperCase() + v.slice(1)}
+                </button>
+              ))}
             </div>
           </div>
-          <BarChart data={stats.applications_over_time} />
-          <div className="flex justify-between mt-1">
-            <span className="text-xs text-gray-300">{stats.applications_over_time[0]?.date.slice(5)}</span>
-            <span className="text-xs text-gray-300">{stats.applications_over_time[stats.applications_over_time.length - 1]?.date.slice(5)}</span>
-          </div>
-        </div>
 
-        {/* pipeline + response rate */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-4 flex flex-col gap-4">
-          <div>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Active pipeline</p>
-            <p className="text-2xl font-bold text-gray-900 mt-0.5">{stats.active}</p>
-            <p className="text-xs text-gray-400 mt-0.5">in progress</p>
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide">Response rate</p>
-            <p className="text-2xl font-bold text-gray-900 mt-0.5">{stats.response_rate}%</p>
-            <div className="w-full bg-gray-100 rounded-full h-1.5 mt-2">
-              <div
-                className="bg-indigo-400 h-1.5 rounded-full transition-all"
-                style={{ width: `${stats.response_rate}%` }}
-              />
-            </div>
-          </div>
-        </div>
-
-        {/* status breakdown */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-4">
-          <p className="text-xs font-semibold text-gray-400 uppercase tracking-wide mb-3">By status</p>
-          <div className="space-y-2">
-            {statusBreakdown.map(([s, count]) => {
-              const { bg, color } = getStatusStyle(s)
-              const pct = stats.total > 0 ? Math.round((count / stats.total) * 100) : 0
-              return (
-                <div key={s} className="flex items-center gap-2">
-                  <span
-                    className={`shrink-0 text-xs font-medium px-2 py-0.5 rounded-full ${bg} w-36 truncate`}
-                    style={{ color }}
-                  >
-                    {s}
-                  </span>
-                  <div className="flex-1 bg-gray-100 rounded-full h-1.5">
-                    <div className="h-1.5 rounded-full" style={{ width: `${pct}%`, backgroundColor: color }} />
+          <div className="p-6 flex-1 flex flex-col justify-end">
+            <div className="flex items-end gap-1 h-32 w-full group">
+              {chartData.map((d, i) => {
+                const pct = (d.count / max) * 100
+                const isLatest = i === chartData.length - 1
+                return (
+                  <div key={i} className="flex-1 h-full flex flex-col justify-end group/bar relative">
+                    <div
+                      className={`w-full rounded-t-sm transition-all duration-300 ${isLatest ? 'bg-indigo-500' : 'bg-indigo-100 group-hover:bg-indigo-200'
+                        }`}
+                      style={{ height: `${Math.max(pct, 2)}%` }}
+                    />
+                    {/* Tooltip */}
+                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 scale-0 group-hover/bar:scale-100 transition-transform bg-gray-900 text-white text-[10px] px-2 py-1 rounded z-20 pointer-events-none whitespace-nowrap">
+                      {d.count} apps {view === 'daily' ? `on ${(d as DailyCount).date?.slice(5)}` : `week ${(d as WeeklyCount).label}`}
+                    </div>
                   </div>
-                  <span className="text-xs text-gray-400 w-5 text-right shrink-0">{count}</span>
+                )
+              })}
+            </div>
+            <div className="flex justify-between mt-3 text-[10px] font-bold text-gray-300 uppercase tracking-widest">
+              <span>{view === 'daily' ? (chartData[0] as DailyCount)?.date?.slice(5) : (chartData[0] as WeeklyCount)?.label}</span>
+              <span className="text-gray-400">Activity Trend</span>
+              <span>{view === 'daily' ? 'Today' : (chartData[chartData.length - 1] as WeeklyCount)?.label}</span>
+            </div>
+          </div>
+        </div>
+
+        {/* --- BY STATUS (Right 1/3) --- */}
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5">
+          <h3 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-4">By Status</h3>
+          <div className="space-y-4">
+            {statusBreakdown.map(([s, count]) => {
+              const { color } = getStatusStyle(s)
+              const pct = stats.total > 0 ? (count / stats.total) * 100 : 0
+              return (
+                <div key={s} className="group">
+                  <div className="flex justify-between items-center mb-1.5">
+                    <span className="text-xs font-bold text-gray-600 truncate mr-2">{s}</span>
+                    <span className="text-xs font-black text-gray-400 group-hover:text-gray-900 transition-colors">{count}</span>
+                  </div>
+                  <div className="h-1.5 w-full bg-gray-50 rounded-full overflow-hidden">
+                    <div
+                      className="h-full rounded-full transition-all duration-700 ease-out"
+                      style={{ width: `${pct}%`, backgroundColor: color }}
+                    />
+                  </div>
                 </div>
               )
             })}
           </div>
-        </div>
-      </div>
 
-      {/* row 2 — weekly trend full width */}
-      <div className="bg-white rounded-2xl border border-gray-200 shadow-sm px-5 py-4">
-        <WeeklyTrendChart data={stats.weekly_applications} />
+          {/* Optional: Add a quick summary at the bottom of the status column */}
+          <div className="mt-6 pt-4 border-t border-gray-50">
+            <div className="flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
+              <span>Avg response</span>
+              <span className="text-gray-900">~{Math.round(totalApplied / (stats.active || 1))} days</span>
+            </div>
+          </div>
+        </div>
       </div>
     </div>
   )
