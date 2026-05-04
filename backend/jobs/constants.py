@@ -7,6 +7,7 @@ ALLOWED_STATUSES = {
     'Wait Next Round',
     'Next Round Confirmed',
     'Interviewed',
+    'Offer',
     'No Offer',
     'Accepted',
     'Rejected',
