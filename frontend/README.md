@@ -1,8 +1,12 @@
 # Frontend
 
-This frontend is a [Next.js](https://nextjs.org) application built with the App Router, TypeScript, and Tailwind CSS.
+Next.js 16 (App Router) application for the JobTracker. Follows an MVC layout:
 
-It connects to the Django backend at `NEXT_PUBLIC_API_URL` and provides a responsive job application tracker UI.
+- `app/` — Controller: routing, page state, data fetching
+- `components/` — View: all UI components, grouped by domain
+- `lib/` — Model: data types, API calls, app constants
+
+Connects to the Django backend at `NEXT_PUBLIC_API_URL`.
 
 ## Setup
 
@@ -25,6 +29,28 @@ npm run dev
 
 Open [http://localhost:3000](http://localhost:3000) in your browser.
 
+## Project structure
+
+```
+frontend/
+├── app/                        # Controller
+│   ├── page.tsx                # Main page — state, fetching, layout
+│   └── layout.tsx
+├── components/                 # View
+│   ├── analytics/
+│   │   ├── Analytics.tsx       # Velocity chart + status breakdown
+│   │   └── StatCards.tsx       # Scrollable status filter chips
+│   ├── jobs/
+│   │   ├── JobModal.tsx        # Add / edit / delete modal
+│   │   ├── JobSearchReport.tsx # Full-screen end-of-search report
+│   │   └── JobTable.tsx        # Sortable table + mobile card view
+│   └── CsvUploadButton.tsx     # CSV import button with toast feedback
+└── lib/                        # Model
+    ├── api.ts                  # Typed wrappers for every backend endpoint
+    ├── constants.ts            # STATUS_OPTIONS, STATUS_GROUPS, getStatusStyle()
+    └── types.ts                # Job, JobStats, PaginatedJobs interfaces
+```
+
 ## Features
 
 - Infinite scroll job list with backend pagination
@@ -42,17 +68,4 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
   - Full status breakdown with percentages
   - Print / Save as PDF via browser print dialog
 - CSV import with create/update/skip reporting
-- Backend sanitization and validation for job form and CSV input
 - Status summary cards and total application count
-
-## Useful files
-
-- `app/page.tsx` — main page layout and state management
-- `components/Analytics.tsx` — velocity chart and status breakdown panel
-- `components/JobSearchReport.tsx` — full-screen job search report with funnel and stats
-- `components/JobTable.tsx` — sortable job list and responsive views
-- `components/JobModal.tsx` — add/edit/delete modal
-- `components/CsvUploadButton.tsx` — CSV upload UI and toast feedback
-- `lib/api.ts` — API helpers for backend endpoints
-- `lib/constants.ts` — shared status labels and badge styles
-- `types/job.ts` — TypeScript job and API response types

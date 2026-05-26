@@ -6,9 +6,9 @@ from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 
-from .constants import ALLOWED_STATUSES
-from .models import Job
-from .sanitizers import sanitize_application_status
+from constants import ALLOWED_STATUSES
+from models import Job
+from utils import sanitize_application_status
 
 
 class StatusSanitizerTests(TestCase):

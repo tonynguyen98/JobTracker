@@ -1,6 +1,6 @@
 # Backend
 
-This backend is a Django application using Django REST Framework for the JobTracker API.
+Django REST Framework API for the JobTracker application. Follows an MVC layout with the Django app shell (`jobs/`) kept minimal.
 
 ## Stack
 
@@ -14,17 +14,27 @@ This backend is a Django application using Django REST Framework for the JobTrac
 
 ```
 backend/
-├── config/          # Django project settings and URL routing
-├── data/            # Optional local CSV sources and fixtures
-├── jobs/            # Jobs app — models, serializers, views, utilities
-│   ├── models.py
-│   ├── serializers.py
-│   ├── urls.py
-│   ├── views.py
-│   └── utils.py
-├── manage.py
-└── .env             # Local environment variables (not committed)
+├── config/           # Django project settings and root URL config
+├── jobs/             # Django app shell
+│   ├── migrations/   # Database migrations (tied to the 'jobs' app label)
+│   ├── admin.py
+│   ├── apps.py
+│   └── models.py     # One-line re-export of Job for Django model discovery
+├── models/           # M: data layer
+│   └── job.py        # Job model (app_label = 'jobs')
+├── controllers/      # C: request handling
+│   └── jobs.py       # All API endpoints
+├── serializers/      # V: data presentation
+│   └── jobs.py       # DRF serializer for Job
+├── utils/            # Shared helpers
+│   └── __init__.py   # CSV parsing + input sanitization
+├── constants.py      # ALLOWED_STATUSES and DEFAULT_STATUS
+├── urls.py           # URL routing for the API
+├── tests.py          # Test suite
+└── manage.py
 ```
+
+The `jobs/` directory is intentionally thin — it exists only to satisfy Django's app system. All business logic lives in the MVC directories at the `backend/` root.
 
 ## Getting started
 
@@ -77,6 +87,12 @@ python manage.py runserver
 
 The backend will be available at `http://localhost:8000` and the API root is `http://localhost:8000/api/`.
 
+### Run tests
+
+```bash
+python manage.py test tests --settings=config.test_settings
+```
+
 ## API endpoints
 
 | Method | URL                     | Description                                                                 |
@@ -86,17 +102,16 @@ The backend will be available at `http://localhost:8000` and the API root is `ht
 | GET    | `/api/jobs/<id>/`       | Retrieve a job by ID                                                        |
 | PATCH  | `/api/jobs/<id>/`       | Update a job by ID                                                          |
 | DELETE | `/api/jobs/<id>/`       | Delete a job by ID                                                          |
-| GET    | `/api/jobs/stats/`      | Return total jobs and counts by status                                      |
+| GET    | `/api/jobs/stats/`      | Return aggregated counts, response rate, and time-series data               |
 | POST   | `/api/jobs/upload-csv/` | Import jobs from CSV and upsert matching rows                               |
 
 ## CSV import
 
-The upload endpoint accepts a file upload under the `file` form field. It reads the CSV, creates new jobs, updates existing jobs that match on company, title, and applied date, and reports counts for created/updated/skipped rows.
+The upload endpoint accepts a file upload under the `file` form field. It reads the CSV, creates new jobs, updates existing jobs that match on `(company_name, job_title, date_applied)`, and reports counts for created/updated/skipped rows.
 
 ## Notes
 
 - `config/settings.py` loads environment variables from `backend/.env` using `python-dotenv`.
-- The `jobs` app sanitizes user input and CSV upload data through `jobs/sanitizers.py`.
-- Job create/update requests validate required fields such as `company_name` and `job_title` and return clear 400 responses for invalid input.
-- CSV uploads normalize and validate fields like URLs, salary values, and application status, while skipping empty or malformed rows.
-- The backend API is used by the frontend through `NEXT_PUBLIC_API_URL=http://localhost:8000/api`.
+- Input sanitization lives in `utils/__init__.py` — called by both the create/update endpoints and the CSV upload.
+- Job create/update requests validate required fields (`company_name`, `job_title`) and return 400 responses for invalid input.
+- The `Job` model declares `app_label = 'jobs'` so Django's migration system stays consistent even though the model file lives outside the `jobs/` app directory.

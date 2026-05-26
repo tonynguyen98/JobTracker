@@ -26,13 +26,13 @@ These are not arbitrary labels. Each has a precise meaning that drives how stats
 
 **Canonical order** is defined in `frontend/lib/constants.ts → STATUS_OPTIONS`. `orderStatusEntries()` in the same file sorts any status map by this order. Always use it when displaying statuses.
 
-**Status groupings used in computed metrics:**
+**Status groupings used in computed metrics** are exported from `frontend/lib/constants.ts → STATUS_GROUPS` and used by `JobSearchReport`. The backend `job_stats` controller keeps its own equivalent `terminal` set — keep both in sync if statuses change.
 
 ```
-SCREENED   = Contacted | Coding Assessment | Interview Scheduled |
-             Next Round Confirmed | Interviewed | Wait Next Round |
-             No Reply | No Offer | Offer | Accepted
-             → "company replied in any form"
+SCREENED    = Contacted | Coding Assessment | Interview Scheduled |
+              Next Round Confirmed | Interviewed | Wait Next Round |
+              No Reply | No Offer | Offer | Accepted
+              → "company replied in any form"
 
 INTERVIEWED = Interview Scheduled | Next Round Confirmed | Interviewed |
               Wait Next Round | No Offer | Offer | Accepted
@@ -47,8 +47,7 @@ TERMINAL    = No Reply | No Offer | Rejected | Offer | Accepted
 ACTIVE      = everything not in TERMINAL and not "Not Started"
 ```
 
-The backend `job_stats` view uses its own equivalent sets — keep them in sync if statuses change:
-- `terminal` in `views.py` governs the `active` count
+- `terminal` in `controllers/jobs.py` governs the `active` count
 - `responded` excludes `Not Started`, `Applied`, and `No Reply` for `response_rate`
 
 ---
@@ -62,6 +61,10 @@ backend/    Django · Django REST Framework · PostgreSQL
 
 Frontend talks to backend via `NEXT_PUBLIC_API_URL` (default `http://localhost:8000/api`). All API helpers live in `frontend/lib/api.ts`.
 
+Both follow MVC:
+- **Frontend** — `lib/` = Model, `components/` = View, `app/` = Controller
+- **Backend** — `models/` = Model, `serializers/` = View, `controllers/` = Controller
+
 ---
 
 ## Frontend
@@ -70,16 +73,16 @@ Frontend talks to backend via `NEXT_PUBLIC_API_URL` (default `http://localhost:8
 
 | File | Role |
 |---|---|
-| `app/page.tsx` | Root page — state, data fetching, layout orchestration |
-| `components/Analytics.tsx` | Velocity bar chart + status breakdown panel |
-| `components/JobSearchReport.tsx` | Full-screen end-of-search report modal |
-| `components/JobTable.tsx` | Sortable table (desktop) + card list (mobile) |
-| `components/JobModal.tsx` | Add / edit / delete modal form |
-| `components/StatCards.tsx` | Horizontally scrollable status filter chips |
+| `app/page.tsx` | Controller — state, data fetching, layout orchestration |
+| `components/analytics/Analytics.tsx` | Velocity bar chart + status breakdown panel |
+| `components/analytics/StatCards.tsx` | Horizontally scrollable status filter chips |
+| `components/jobs/JobSearchReport.tsx` | Full-screen end-of-search report modal |
+| `components/jobs/JobTable.tsx` | Sortable table (desktop) + card list (mobile) |
+| `components/jobs/JobModal.tsx` | Add / edit / delete modal form |
 | `components/CsvUploadButton.tsx` | CSV import button with toast feedback |
 | `lib/api.ts` | Typed wrappers for every backend endpoint |
-| `lib/constants.ts` | `STATUS_OPTIONS`, `getStatusStyle()`, `orderStatusEntries()` |
-| `types/job.ts` | `Job`, `JobStats`, `PaginatedJobs`, and related interfaces |
+| `lib/constants.ts` | `STATUS_OPTIONS`, `STATUS_GROUPS`, `getStatusStyle()`, `orderStatusEntries()` |
+| `lib/types.ts` | `Job`, `JobStats`, `PaginatedJobs`, and related interfaces |
 
 ### No external chart libraries
 
@@ -110,19 +113,35 @@ Mutations (`createJob`, `updateJob`, `deleteJob`) always trigger both `fetchJobs
 
 ## Backend
 
+### Directory structure (MVC)
+
+```
+backend/
+  config/          ← Django project settings and root URL config
+  jobs/            ← Django app shell: migrations, apps.py, thin models.py re-export
+  models/          ← M: Job model (app_label = 'jobs' for migration compatibility)
+  controllers/     ← C: API endpoint handlers
+  serializers/     ← V: DRF serializers that shape API responses
+  utils/           ← Shared helpers: CSV parsing and input sanitization
+  constants.py     ← ALLOWED_STATUSES and DEFAULT_STATUS
+  urls.py          ← URL routing for the API
+  tests.py         ← Test suite (run with: python manage.py test tests)
+```
+
 ### Key files
 
 | File | Role |
 |---|---|
-| `jobs/models.py` | `Job` model — all fields are optional except `company_name` and `job_title` |
-| `jobs/views.py` | All API views — list, create, detail, stats, upload-csv |
-| `jobs/serializers.py` | DRF serializer for `Job` |
-| `jobs/sanitizers.py` | Cleans input before validation (called for both form and CSV) |
-| `jobs/utils.py` | CSV parsing — column name normalization and row mapping |
+| `models/job.py` | `Job` model — all fields optional except `company_name` and `job_title` |
+| `controllers/jobs.py` | All API endpoints — list, create, detail, stats, upload-csv |
+| `serializers/jobs.py` | DRF serializer for `Job` |
+| `utils/__init__.py` | CSV parsing and input sanitization (sanitize_job, load_jobs_from_content) |
+| `constants.py` | `ALLOWED_STATUSES` set and `DEFAULT_STATUS` |
+| `jobs/models.py` | One-line re-export of `Job` — required for Django's model discovery |
 
 ### CSV upsert key
 
-Existing jobs are matched on the tuple `(company_name.lower(), job_title.lower(), date_applied)`. Only `job_link`, `type_of_job`, `salary_annual`, `application_status`, and `notes` are updated on match. Rows with no changes are skipped and reported separately. This key is defined in `views.upload_csv` — update it if the model changes.
+Existing jobs are matched on the tuple `(company_name.lower(), job_title.lower(), date_applied)`. Only `job_link`, `type_of_job`, `salary_annual`, `application_status`, and `notes` are updated on match. Rows with no changes are skipped and reported separately. This key is defined in `controllers/jobs.py → upload_csv` — update it if the model changes.
 
 ### Stats computation
 
@@ -132,8 +151,9 @@ Existing jobs are matched on the tuple `(company_name.lower(), job_title.lower()
 
 ## Things to avoid
 
-- **Don't rename statuses** without updating `STATUS_OPTIONS` in `constants.ts`, the grouping arrays in `JobSearchReport.tsx`, and the terminal/responded sets in `views.py`.
+- **Don't rename statuses** without updating `STATUS_OPTIONS` and `STATUS_GROUPS` in `lib/constants.ts` and the `terminal`/`responded` sets in `controllers/jobs.py`.
 - **Don't add chart libraries** — use the existing CSS/SVG patterns.
 - **Don't use proportional widths for the funnel** — fixed stepped widths are correct.
 - **Don't skip `orderStatusEntries()`** when rendering status lists — raw `Object.entries()` will produce inconsistent ordering.
 - **Don't forget mobile** — test any header or report UI change at narrow viewports.
+- **Don't put code inside `jobs/`** beyond the app shell (migrations, apps.py, the thin models.py re-export). New backend logic belongs in `models/`, `controllers/`, `serializers/`, or `utils/`.

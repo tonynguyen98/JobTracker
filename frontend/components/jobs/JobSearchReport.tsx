@@ -1,28 +1,13 @@
 'use client'
 
 import { useMemo } from 'react'
-import { Job } from '@/types/job'
-import { getStatusStyle, orderStatusEntries } from '@/lib/constants'
+import { Job } from '@/lib/types'
+import { getStatusStyle, orderStatusEntries, STATUS_GROUPS } from '@/lib/constants'
 
 interface Props {
   jobs: Job[]
   onClose: () => void
 }
-
-// Statuses that indicate any company response beyond the initial application
-const SCREENED = [
-  'Contacted', 'Coding Assessment', 'Interview Scheduled', 'Next Round Confirmed',
-  'Interviewed', 'Wait Next Round', 'No Reply', 'No Offer', 'Offer', 'Accepted',
-]
-// Statuses that indicate an interview stage was reached
-const INTERVIEWED = [
-  'Interview Scheduled', 'Next Round Confirmed', 'Interviewed',
-  'Wait Next Round', 'No Offer', 'Offer', 'Accepted',
-]
-const OFFERED = ['Offer', 'Accepted']
-
-// Statuses that represent a resolved outcome (no longer active)
-const TERMINAL = ['No Reply', 'No Offer', 'Rejected', 'Offer', 'Accepted']
 
 function fmt(d: string | null | undefined, opts: Intl.DateTimeFormatOptions) {
   if (!d) return '—'
@@ -34,10 +19,10 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
     const applied = jobs.filter(j => j.application_status !== 'Not Started')
     const n = applied.length
 
-    const screened = applied.filter(j => SCREENED.includes(j.application_status)).length
-    const interviewed = applied.filter(j => INTERVIEWED.includes(j.application_status)).length
-    const offers = applied.filter(j => OFFERED.includes(j.application_status)).length
-    const active = applied.filter(j => !TERMINAL.includes(j.application_status)).length
+    const screened = applied.filter(j => STATUS_GROUPS.SCREENED.has(j.application_status)).length
+    const interviewed = applied.filter(j => STATUS_GROUPS.INTERVIEWED.has(j.application_status)).length
+    const offers = applied.filter(j => STATUS_GROUPS.OFFERED.has(j.application_status)).length
+    const active = applied.filter(j => !STATUS_GROUPS.TERMINAL.has(j.application_status)).length
 
     const byStatus: Record<string, number> = {}
     applied.forEach(j => {

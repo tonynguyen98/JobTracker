@@ -40,12 +40,6 @@ export interface JobStats {
   top_companies: { company_name: string; count: number }[];
 }
 
-export interface SyncResult {
-  synced: number;
-  created: number;
-  updated: number;
-}
-
 export interface UploadResult {
   total_in_csv: number;
   created: number;

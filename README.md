@@ -13,31 +13,32 @@ A full-stack job application tracker built with Next.js, Django, and PostgreSQL.
 ```
 JobTracker/
 ├── backend/
-│   ├── config/          # Django project settings and URL config
-│   ├── data/            # Optional CSV source for imports
-│   ├── jobs/            # Jobs app — models, serializers, views, utils
-│   │   ├── models.py
-│   │   ├── views.py
-│   │   ├── serializers.py
-│   │   ├── urls.py
-│   │   └── utils.py
-│   ├── manage.py
-│   └── .env             # Local environment variables (not committed)
+│   ├── config/           # Django project settings and root URL config
+│   ├── jobs/             # Django app shell: migrations, apps.py, thin models re-export
+│   ├── models/           # M: Job model
+│   ├── controllers/      # C: API endpoint handlers
+│   ├── serializers/      # V: DRF serializers
+│   ├── utils/            # CSV parsing and input sanitization
+│   ├── constants.py      # Allowed statuses and default status
+│   ├── urls.py           # API URL routing
+│   ├── tests.py          # Test suite
+│   └── manage.py
 └── frontend/
-    ├── app/
-    │   └── page.tsx     # Main job table and dashboard UI
-    ├── components/
-    │   ├── Analytics.tsx
-    │   ├── CsvUploadButton.tsx
-    │   ├── JobModal.tsx
-    │   ├── JobSearchReport.tsx
-    │   ├── JobTable.tsx
-    │   └── StatCards.tsx
-    ├── lib/
-    │   ├── api.ts        # API helpers for backend endpoints
-    │   └── constants.ts  # Shared status labels and badge styles
-    └── types/
-        └── job.ts        # TypeScript types
+    ├── app/              # Controller: routing, page state, data fetching
+    │   └── page.tsx
+    ├── components/       # View: all UI components
+    │   ├── analytics/
+    │   │   ├── Analytics.tsx
+    │   │   └── StatCards.tsx
+    │   ├── jobs/
+    │   │   ├── JobModal.tsx
+    │   │   ├── JobSearchReport.tsx
+    │   │   └── JobTable.tsx
+    │   └── CsvUploadButton.tsx
+    └── lib/              # Model: data types, API calls, constants
+        ├── api.ts
+        ├── constants.ts
+        └── types.ts
 ```
 
 ## Getting started
@@ -59,10 +60,8 @@ cd JobTracker
 
 ```bash
 cd backend
-
 python3 -m venv venv
 source venv/bin/activate
-
 pip install django djangorestframework django-cors-headers psycopg2-binary python-dotenv
 ```
 
@@ -127,7 +126,7 @@ The app will be running at `http://localhost:3000`.
 | GET    | `/api/jobs/<id>/`       | Retrieve a job by ID                                                        |
 | PATCH  | `/api/jobs/<id>/`       | Update a job by ID                                                          |
 | DELETE | `/api/jobs/<id>/`       | Delete a job by ID                                                          |
-| GET    | `/api/jobs/stats/`      | Return total jobs and counts by status                                      |
+| GET    | `/api/jobs/stats/`      | Return aggregated counts, response rate, and time-series data               |
 | POST   | `/api/jobs/upload-csv/` | Import jobs from CSV and upsert matching rows                               |
 
 ## Features
@@ -142,4 +141,3 @@ The app will be running at `http://localhost:3000`.
 - CSV import with create/update/skip feedback and toast notifications
 - Backend sanitization and validation of job data for forms and CSV uploads
 - Status badges, totals, and stats cards for quick insights
-- Backend REST API with detail, stats, and upload endpoints

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Job } from '@/types/job'
+import { Job } from '@/lib/types'
 import { getStatusStyle } from '@/lib/constants'
 
 type SortKey = keyof Job

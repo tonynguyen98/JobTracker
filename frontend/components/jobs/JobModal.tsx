@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { Job } from '@/types/job'
+import { Job } from '@/lib/types'
 import { STATUS_OPTIONS, TYPE_OPTIONS, DEFAULT_STATUS_TEXT } from '@/lib/constants'
 
 const EMPTY_FORM = {

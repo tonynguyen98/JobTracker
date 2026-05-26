@@ -1,4 +1,4 @@
-import { Job, PaginatedJobs, JobStats, UploadResult } from "@/types/job";
+import { Job, PaginatedJobs, JobStats, UploadResult } from "@/lib/types";
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL ?? "http://localhost:8000/api";
 

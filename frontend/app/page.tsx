@@ -3,13 +3,13 @@
 import { useEffect, useState, useCallback, useRef } from 'react'
 import Link from 'next/link'
 import { getAllJobs, getJobs, getStats, createJob, updateJob, deleteJob } from '@/lib/api'
-import { Job, JobStats } from '@/types/job'
-import JobTable from '@/components/JobTable'
-import StatCards from '@/components/StatCards'
-import JobModal from '@/components/JobModal'
+import { Job, JobStats } from '@/lib/types'
+import JobTable from '@/components/jobs/JobTable'
+import JobModal from '@/components/jobs/JobModal'
+import JobSearchReport from '@/components/jobs/JobSearchReport'
+import Analytics from '@/components/analytics/Analytics'
+import StatCards from '@/components/analytics/StatCards'
 import CsvUploadButton from '@/components/CsvUploadButton'
-import Analytics from '@/components/Analytics'
-import JobSearchReport from '@/components/JobSearchReport'
 
 type ModalState =
   | { mode: 'closed' }

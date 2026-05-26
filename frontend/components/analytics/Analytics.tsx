@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { DailyCount, JobStats, WeeklyCount } from '@/types/job'
+import { DailyCount, JobStats, WeeklyCount } from '@/lib/types'
 import { getStatusStyle, orderStatusEntries } from '@/lib/constants'
 
 interface Props {
@@ -128,13 +128,6 @@ export default function Analytics({ stats }: Props) {
             })}
           </div>
 
-          {/* Optional: Add a quick summary at the bottom of the status column */}
-          <div className="mt-6 pt-4 border-t border-gray-50">
-            <div className="flex justify-between items-center text-[10px] font-bold text-gray-400 uppercase tracking-tighter">
-              <span>Avg response</span>
-              <span className="text-gray-900">~{Math.round(totalApplied / (stats.active || 1))} days</span>
-            </div>
-          </div>
         </div>
       </div>
     </div>

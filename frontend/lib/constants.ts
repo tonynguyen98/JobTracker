@@ -14,6 +14,20 @@ export const STATUS_OPTIONS = [
   "Accepted",
 ];
 
+// Status groupings — keep in sync with the terminal/responded sets in backend/jobs/views.py
+export const STATUS_GROUPS = {
+  SCREENED: new Set([
+    "Contacted", "Coding Assessment", "Interview Scheduled", "Next Round Confirmed",
+    "Interviewed", "Wait Next Round", "No Reply", "No Offer", "Offer", "Accepted",
+  ]),
+  INTERVIEWED: new Set([
+    "Interview Scheduled", "Next Round Confirmed", "Interviewed",
+    "Wait Next Round", "No Offer", "Offer", "Accepted",
+  ]),
+  OFFERED: new Set(["Offer", "Accepted"]),
+  TERMINAL: new Set(["No Reply", "No Offer", "Rejected", "Offer", "Accepted"]),
+} as const;
+
 export function orderStatusEntries<T>(entries: [string, T][]) {
   return [...entries].sort(([a], [b]) => {
     const aIndex = STATUS_OPTIONS.indexOf(a);

@@ -1,4 +1,4 @@
-import { JobStats } from '@/types/job'
+import { JobStats } from '@/lib/types'
 import { getStatusStyle, orderStatusEntries } from '@/lib/constants'
 
 interface Props {
