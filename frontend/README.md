@@ -33,6 +33,14 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 - Sortable table columns on desktop
 - Responsive mobile card view
 - Add/edit/delete jobs through a modal form
+- Analytics dashboard with application velocity chart (daily/weekly toggle) and status breakdown
+- Job Search Report — full-screen end-of-search summary including:
+  - Pipeline funnel (Applied → Screened → Interviewed → Offer) with drop-off percentages
+  - Final outcome breakdown (No Reply, Rejected, No Offer, Offer, Accepted)
+  - Fun facts grid (response rate, interview rate, peak week, most applied role, etc.)
+  - Daily activity timeline
+  - Full status breakdown with percentages
+  - Print / Save as PDF via browser print dialog
 - CSV import with create/update/skip reporting
 - Backend sanitization and validation for job form and CSV input
 - Status summary cards and total application count
@@ -40,6 +48,8 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 ## Useful files
 
 - `app/page.tsx` — main page layout and state management
+- `components/Analytics.tsx` — velocity chart and status breakdown panel
+- `components/JobSearchReport.tsx` — full-screen job search report with funnel and stats
 - `components/JobTable.tsx` — sortable job list and responsive views
 - `components/JobModal.tsx` — add/edit/delete modal
 - `components/CsvUploadButton.tsx` — CSV upload UI and toast feedback

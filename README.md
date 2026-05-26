@@ -27,8 +27,10 @@ JobTracker/
     ├── app/
     │   └── page.tsx     # Main job table and dashboard UI
     ├── components/
+    │   ├── Analytics.tsx
     │   ├── CsvUploadButton.tsx
     │   ├── JobModal.tsx
+    │   ├── JobSearchReport.tsx
     │   ├── JobTable.tsx
     │   └── StatCards.tsx
     ├── lib/
@@ -135,6 +137,8 @@ The app will be running at `http://localhost:3000`.
 - Infinite scroll / paginated job list
 - Sortable table columns on desktop
 - Responsive mobile card view
+- Analytics dashboard with application velocity chart and status breakdown
+- Job Search Report — full-screen summary with pipeline funnel, outcome breakdown, fun facts, activity timeline, and print-to-PDF support
 - CSV import with create/update/skip feedback and toast notifications
 - Backend sanitization and validation of job data for forms and CSV uploads
 - Status badges, totals, and stats cards for quick insights

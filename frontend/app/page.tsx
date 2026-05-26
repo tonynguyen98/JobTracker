@@ -9,6 +9,7 @@ import StatCards from '@/components/StatCards'
 import JobModal from '@/components/JobModal'
 import CsvUploadButton from '@/components/CsvUploadButton'
 import Analytics from '@/components/Analytics'
+import JobSearchReport from '@/components/JobSearchReport'
 
 type ModalState =
   | { mode: 'closed' }
@@ -22,7 +23,8 @@ export default function Home() {
   const [stats, setStats] = useState<JobStats | null>(null)
   const [loading, setLoading] = useState(true)
   const [loadingMore, setLoadingMore] = useState(false)
-  const [exporting, setExporting] = useState(false)
+  const [reportJobs, setReportJobs] = useState<Job[] | null>(null)
+  const [loadingReport, setLoadingReport] = useState(false)
   const [search, setSearch] = useState('')
   const [activeStatus, setActiveStatus] = useState('')
   const [page, setPage] = useState(1)
@@ -108,60 +110,13 @@ export default function Home() {
     fetchStats()
   }
 
-  const exportJobsToCsv = (jobsToExport: Job[]) => {
-    const headers = [
-      'Company Name',
-      'Role',
-      'Job Link',
-      'Applied Date',
-      'Type',
-      'Salary',
-      'Status',
-      'Notes',
-      'Created At',
-    ]
-
-    const escapeCsv = (value: string | null | undefined) => {
-      const text = String(value ?? '')
-      if (/[",\n]/.test(text)) {
-        return `"${text.replace(/"/g, '""')}"`
-      }
-      return text
-    }
-
-    const rows = jobsToExport.map(job => [
-      job.company_name,
-      job.job_title,
-      job.job_link,
-      job.date_applied,
-      job.type_of_job,
-      job.salary_annual,
-      job.application_status,
-      job.notes,
-      job.created_at,
-    ].map(escapeCsv).join(','))
-
-    return [headers.join(','), ...rows].join('\n')
-  }
-
-  const handleExport = async () => {
-    setExporting(true)
+  const handleOpenReport = async () => {
+    setLoadingReport(true)
     try {
       const allJobs = await getAllJobs()
-      const csv = exportJobsToCsv(allJobs)
-      const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' })
-      const url = URL.createObjectURL(blob)
-      const link = document.createElement('a')
-      link.href = url
-      link.download = `job-tracker-backup-${new Date().toISOString().slice(0, 10)}.csv`
-      document.body.appendChild(link)
-      link.click()
-      document.body.removeChild(link)
-      URL.revokeObjectURL(url)
-    } catch {
-      // ignore export errors silently for now
+      setReportJobs(allJobs)
     } finally {
-      setExporting(false)
+      setLoadingReport(false)
     }
   }
 
@@ -186,14 +141,21 @@ export default function Home() {
             )}
           </Link>
           <div className="flex items-center gap-2">
+            <button
+              onClick={handleOpenReport}
+              disabled={loadingReport}
+              title="Job Report"
+              className="border border-indigo-200 bg-indigo-50 text-indigo-700 py-1.5 px-2.5 sm:px-4 rounded-lg hover:bg-indigo-100 disabled:opacity-50 transition-colors flex items-center gap-1.5"
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="3" y="3" width="18" height="18" rx="2" />
+                <path d="M3 9h18M9 21V9" />
+              </svg>
+              <span className="hidden sm:inline text-sm whitespace-nowrap">
+                {loadingReport ? 'Loading...' : 'Job Report'}
+              </span>
+            </button>
             <div className="hidden sm:flex items-center gap-2">
-              <button
-                onClick={handleExport}
-                disabled={exporting}
-                className="border border-amber-300 bg-amber-50 text-amber-700 text-sm px-3 sm:px-4 py-1.5 rounded-lg hover:bg-amber-100 disabled:opacity-50 transition-colors whitespace-nowrap"
-              >
-                {exporting ? 'Backing up...' : 'Export CSV'}
-              </button>
               <CsvUploadButton onComplete={() => { fetchJobs(); fetchStats() }} />
             </div>
             <button
@@ -284,6 +246,13 @@ export default function Home() {
           onClose={() => setModal({ mode: 'closed' })}
           onSave={handleUpdate}
           onDelete={handleDelete}
+        />
+      )}
+
+      {reportJobs && (
+        <JobSearchReport
+          jobs={reportJobs}
+          onClose={() => setReportJobs(null)}
         />
       )}
     </div>
