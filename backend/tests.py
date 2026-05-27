@@ -19,6 +19,13 @@ class StatusSanitizerTests(TestCase):
     def test_no_offer_is_allowed(self):
         self.assertEqual(sanitize_application_status('No Offer'), 'No Offer')
 
+    def test_denied_is_allowed(self):
+        self.assertEqual(sanitize_application_status('Denied'), 'Denied')
+
+    def test_unknown_status_falls_back_to_default(self):
+        self.assertEqual(sanitize_application_status('Made Up Status'), 'Not Started')
+        self.assertEqual(sanitize_application_status(''), 'Not Started')
+
 
 class JobEndpointTests(APITestCase):
     def setUp(self):
@@ -326,6 +333,53 @@ class JobEndpointTests(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_200_OK)
         self.assertEqual(response.data['total'], 3)
         self.assertEqual(response.data['active'], 0)
+
+    def test_job_stats_denied_is_terminal_and_not_active(self):
+        Job.objects.create(
+            company_name='Acme Corp',
+            job_title='Engineer',
+            application_status='Denied',
+            date_applied=self.today,
+        )
+        Job.objects.create(
+            company_name='Beta LLC',
+            job_title='Designer',
+            application_status='Interview Scheduled',
+            date_applied=self.today,
+        )
+
+        url = reverse('job-stats')
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        self.assertEqual(response.data['total'], 2)
+        # Denied is terminal — only Interview Scheduled is active
+        self.assertEqual(response.data['active'], 1)
+        self.assertEqual(response.data['by_status']['Denied'], 1)
+
+    def test_job_stats_denied_counts_toward_response_rate(self):
+        # Denied means you withdrew after engaging — company had responded
+        Job.objects.create(
+            company_name='Acme Corp',
+            job_title='Engineer',
+            application_status='Denied',
+            date_applied=self.today,
+        )
+        Job.objects.create(
+            company_name='Beta LLC',
+            job_title='Designer',
+            application_status='Applied',
+            date_applied=self.today,
+        )
+
+        url = reverse('job-stats')
+        response = self.client.get(url)
+
+        self.assertEqual(response.status_code, status.HTTP_200_OK)
+        # applied_total = 2 (neither is Not Started)
+        # responded = 1 (Denied; Applied and No Reply are excluded)
+        # response_rate = 1/2 * 100 = 50
+        self.assertEqual(response.data['response_rate'], 50)
 
     def test_job_stats_response_rate_with_not_started(self):
         # Jobs with "Not Started" status should be excluded from response rate calculation

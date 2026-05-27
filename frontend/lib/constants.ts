@@ -11,6 +11,7 @@ export const STATUS_OPTIONS = [
   "No Reply",
   "No Offer",
   "Rejected",
+  "Denied",
   "Accepted",
 ];
 
@@ -25,7 +26,7 @@ export const STATUS_GROUPS = {
     "Wait Next Round", "No Offer", "Offer", "Accepted",
   ]),
   OFFERED: new Set(["Offer", "Accepted"]),
-  TERMINAL: new Set(["No Reply", "No Offer", "Rejected", "Offer", "Accepted"]),
+  TERMINAL: new Set(["No Reply", "No Offer", "Rejected", "Denied", "Offer", "Accepted"]),
 } as const;
 
 export function orderStatusEntries<T>(entries: [string, T][]) {
@@ -61,6 +62,7 @@ const STATUS_MAP: Record<string, { bg: string; color: string }> = {
   "No Offer": { bg: "bg-rose-100", color: "#9d174d" },
   Accepted: { bg: "bg-green-100", color: "#14532d" },
   Rejected: { bg: "bg-red-100", color: "#7f1d1d" },
+  Denied: { bg: "bg-slate-100", color: "#334155" },
   "No Reply": { bg: "bg-pink-100", color: "#ce6d6d" },
 };
 

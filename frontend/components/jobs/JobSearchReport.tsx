@@ -82,6 +82,7 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
       noReply: byStatus['No Reply'] ?? 0,
       noOffer: byStatus['No Offer'] ?? 0,
       rejected: byStatus['Rejected'] ?? 0,
+      denied: byStatus['Denied'] ?? 0,
       accepted: byStatus['Accepted'] ?? 0,
       firstDate,
       lastDate,
@@ -160,6 +161,14 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
       color: '#f97316',
       bg: '#fff7ed',
       border: '#fed7aa',
+    },
+    {
+      label: 'Denied',
+      desc: 'Withdrew before finishing',
+      count: data.denied,
+      color: '#334155',
+      bg: '#f8fafc',
+      border: '#cbd5e1',
     },
     {
       label: 'Offer',
@@ -368,7 +377,7 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
             Final Outcomes
           </h2>
           <p className="text-xs text-gray-400 mb-3">Where applications ended up</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5 gap-3">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
             {outcomes.map((o, i) => (
               <div
                 key={i}

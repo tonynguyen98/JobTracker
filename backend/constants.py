@@ -11,6 +11,7 @@ ALLOWED_STATUSES = {
     'No Offer',
     'Accepted',
     'Rejected',
+    'Denied',
     'No Reply',
 }
 

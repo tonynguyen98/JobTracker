@@ -93,7 +93,7 @@ def job_stats(request):
         if job['date_applied']:
             applied_dates.append(job['date_applied'])
 
-    terminal = {'Accepted', 'Rejected', 'No Reply', 'Not Started', 'No Offer', 'Offer'}
+    terminal = {'Accepted', 'Rejected', 'Denied', 'No Reply', 'Not Started', 'No Offer', 'Offer'}
     active = sum(v for k, v in status_counts.items() if k not in terminal)
 
     responded = sum(v for k, v in status_counts.items() if k not in {'Not Started', 'Applied', 'No Reply'})
