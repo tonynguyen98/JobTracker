@@ -37,10 +37,10 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
       .sort()
     const firstDate = validDates[0] ?? null
     const lastDate = validDates[validDates.length - 1] ?? null
-    const durationDays =
-      firstDate && lastDate
-        ? Math.ceil((new Date(lastDate).getTime() - new Date(firstDate).getTime()) / 86400000)
-        : 0
+    const todayStr = new Date().toISOString().slice(0, 10)
+    const durationDays = firstDate
+      ? Math.ceil((new Date(todayStr).getTime() - new Date(firstDate).getTime()) / 86400000)
+      : 0
 
     // Most common job title
     const titleCounts: Record<string, number> = {}
@@ -230,10 +230,9 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
     {
       label: 'Days Searching',
       value: data.durationDays > 0 ? String(data.durationDays) : '—',
-      desc:
-        data.firstDate && data.lastDate
-          ? `${fmt(data.firstDate, { month: 'short', day: 'numeric' })} → ${fmt(data.lastDate, { month: 'short', day: 'numeric', year: 'numeric' })}`
-          : 'Date range not available',
+      desc: data.firstDate
+        ? `${fmt(data.firstDate, { month: 'short', day: 'numeric' })} → Today`
+        : 'Date range not available',
     },
     {
       label: 'Still Active',
