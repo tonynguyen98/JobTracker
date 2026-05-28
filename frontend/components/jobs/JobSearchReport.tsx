@@ -123,7 +123,7 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
     },
     {
       label: 'Received an Offer',
-      sublabel: 'Written offers extended',
+      sublabel: 'Offer received',
       count: data.offers,
       color: '#10b981',
       pct: data.offerRate,
@@ -172,7 +172,7 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
     },
     {
       label: 'Offer',
-      desc: 'Written offer received',
+      desc: 'Offer received',
       count: data.offers - data.accepted,
       color: '#10b981',
       bg: '#f0fdf4',
@@ -202,7 +202,7 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
     {
       label: 'Offer Rate',
       value: `${data.offerRate}%`,
-      desc: `${data.offers} written offer${data.offers !== 1 ? 's' : ''} from ${data.total} apps`,
+      desc: `${data.offers} offer${data.offers !== 1 ? 's' : ''} from ${data.total} apps`,
     },
     ...(data.peakWeekDate && data.peakWeekCount > 0
       ? [

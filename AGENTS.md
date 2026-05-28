@@ -18,7 +18,7 @@ These are not arbitrary labels. Each has a precise meaning that drives how stats
 | Interview Scheduled | Interview on calendar |
 | Interviewed | Interview completed, awaiting decision |
 | Wait Next Round | Post-interview, invited to continue |
-| Offer | **Written offer received** |
+| Offer | **Offer received** |
 | No Reply | Had contact, then ghosted after follow-up |
 | No Offer | Went through the full process, then rejected |
 | Rejected | Rejected via automated/form response — no human contact |
@@ -39,7 +39,7 @@ INTERVIEWED = Interview Scheduled | Next Round Confirmed | Interviewed |
               → "reached interview stage"
 
 OFFERED     = Offer | Accepted
-              → "received a written offer"
+              → "offer received"
 
 TERMINAL    = No Reply | No Offer | Rejected | Offer | Accepted
               → "no longer active"
