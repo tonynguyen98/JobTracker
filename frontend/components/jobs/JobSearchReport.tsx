@@ -244,9 +244,20 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
 
   return (
     <div
+      id="job-search-report"
       className="fixed inset-0 z-50 overflow-y-auto print:static print:overflow-visible"
       style={{ background: '#f8fafc' }}
     >
+      <style>{`
+        @media print {
+          @page { size: letter portrait; margin: 0.3in; }
+          * { -webkit-print-color-adjust: exact !important; print-color-adjust: exact !important; }
+          #main-app-root > *:not(#job-search-report) { display: none !important; }
+          #main-app-root { min-height: 0 !important; background: #f8fafc !important; }
+          #job-search-report { position: static !important; height: auto !important; overflow: visible !important; background: #f8fafc !important; }
+        }
+      `}</style>
+
       {/* Sticky toolbar — hidden on print */}
       <div className="print:hidden sticky top-0 z-10 bg-white border-b border-gray-200 shadow-sm">
         <div className="max-w-4xl mx-auto px-6 py-3 flex items-center justify-between">
@@ -284,20 +295,21 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 py-10 space-y-8 print:px-8 print:py-6 print:space-y-6">
+      <div className="max-w-4xl mx-auto px-6 py-10 space-y-8 print:px-0 print:py-0 print:space-y-2">
+
         {/* ── HERO HEADER ── */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden print:shadow-none print:border-gray-300">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden print:shadow-none print:border-gray-300 print:rounded-lg">
           <div
-            className="px-8 py-10 text-white print:py-8"
+            className="px-8 py-10 text-white print:px-5 print:py-3"
             style={{ background: 'linear-gradient(135deg, #1e293b 0%, #334155 100%)' }}
           >
-            <p className="text-xs text-slate-400 uppercase tracking-[0.2em] font-bold mb-3">
+            <p className="text-xs text-slate-400 uppercase tracking-[0.2em] font-bold mb-3 print:mb-1 print:text-[9px]">
               End-of-Search Review
             </p>
-            <h1 className="text-4xl font-black tracking-tight mb-2 print:text-3xl">
+            <h1 className="text-4xl font-black tracking-tight mb-2 print:text-xl print:mb-0.5">
               Your Job Search, Reviewed
             </h1>
-            <p className="text-slate-300 text-lg">
+            <p className="text-slate-300 text-lg print:text-xs">
               {fmt(data.firstDate, { month: 'long', day: 'numeric', year: 'numeric' })}
               {data.lastDate !== data.firstDate && (
                 <> &ndash; {fmt(data.lastDate, { month: 'long', day: 'numeric', year: 'numeric' })}</>
@@ -310,9 +322,9 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
               { label: 'Days Searching', value: data.durationDays || '—' },
               { label: 'Still in Pipeline', value: data.active },
             ].map((stat, i) => (
-              <div key={i} className="px-6 py-5">
-                <p className="text-3xl font-black text-gray-900">{stat.value}</p>
-                <p className="text-xs text-gray-400 uppercase tracking-wider font-bold mt-1">
+              <div key={i} className="px-6 py-5 print:px-4 print:py-2">
+                <p className="text-3xl font-black text-gray-900 print:text-xl">{stat.value}</p>
+                <p className="text-xs text-gray-400 uppercase tracking-wider font-bold mt-1 print:text-[9px] print:mt-0">
                   {stat.label}
                 </p>
               </div>
@@ -321,14 +333,14 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
         </div>
 
         {/* ── PIPELINE FUNNEL ── */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 print:shadow-none print:border-gray-300">
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 print:shadow-none print:border-gray-300 print:rounded-lg print:p-3">
+          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 print:text-[9px]">
             Application Pipeline
           </h2>
-          <p className="text-xs text-gray-400 mb-6">How far your applications made it</p>
+          <p className="text-xs text-gray-400 mb-6 print:mb-2 print:text-[9px]">How far your applications made it</p>
 
-          {/* Fixed stepped widths give a clean funnel shape regardless of actual counts */}
-          <div className="space-y-0.5 w-full">
+          {/* Screen: vertical stepped funnel */}
+          <div className="print:hidden space-y-0.5 w-full">
             {funnelStages.map((stage, i) => {
               const stepWidths = ['100%', '76%', '54%', '34%']
               const dropPct =
@@ -337,7 +349,6 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
                       ((funnelStages[i - 1].count - stage.count) / funnelStages[i - 1].count) * 100
                     )
                   : null
-
               return (
                 <div key={i} className="flex flex-col items-center w-full">
                   {i > 0 && (
@@ -369,48 +380,78 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
               )
             })}
           </div>
+
+          {/* Print: equal-width horizontal boxes with drop-off */}
+          <div className="hidden print:flex gap-1.5 items-stretch">
+            {funnelStages.map((stage, i) => {
+              const dropPct =
+                i > 0 && funnelStages[i - 1].count > 0
+                  ? Math.round(
+                      ((funnelStages[i - 1].count - stage.count) / funnelStages[i - 1].count) * 100
+                    )
+                  : null
+              return (
+                <div key={i} className="flex-1 flex flex-col justify-center items-center rounded-lg py-2.5 px-2 text-white text-center" style={{ backgroundColor: stage.color }}>
+                  <p className="text-xl font-black leading-none">{stage.count}</p>
+                  <p className="text-[9px] font-semibold opacity-90 mt-0.5 leading-tight">{stage.label}</p>
+                  <div className="mt-1 flex flex-col items-center gap-0.5">
+                    <span className="text-[8px] font-bold bg-white/20 rounded-full px-1.5 py-px">
+                      {stage.pct}% of total
+                    </span>
+                    {dropPct !== null && dropPct > 0 && (
+                      <span className="text-[8px] font-bold opacity-80">-{dropPct}% drop</span>
+                    )}
+                  </div>
+                </div>
+              )
+            })}
+          </div>
         </div>
 
         {/* ── FINAL OUTCOMES ── */}
-        <div>
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 print:shadow-none print:border-gray-300 print:rounded-lg print:p-3">
+          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 print:text-[9px]">
             Final Outcomes
           </h2>
-          <p className="text-xs text-gray-400 mb-3">Where applications ended up</p>
-          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3">
+          <p className="text-xs text-gray-400 mb-3 print:mb-1.5 print:text-[9px]">Where applications ended up</p>
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-6 gap-3 print:grid-cols-6 print:gap-1.5">
             {outcomes.map((o, i) => (
               <div
                 key={i}
                 style={{ background: o.bg, borderColor: o.border }}
-                className="rounded-xl border p-4 text-center"
+                className="rounded-xl border p-4 text-center print:rounded-lg print:p-2"
               >
-                <p style={{ color: o.color }} className="text-3xl font-black">
+                <p style={{ color: o.color }} className="text-3xl font-black print:text-xl">
                   {o.count}
                 </p>
-                <p className="text-xs font-bold text-gray-700 mt-1">{o.label}</p>
-                <p className="text-[10px] text-gray-400 mt-0.5 leading-tight">{o.desc}</p>
+                <p className="text-xs font-bold text-gray-700 mt-1 print:text-[9px] print:mt-0.5">{o.label}</p>
+                <p className="text-[10px] text-gray-400 mt-0.5 leading-tight print:hidden">{o.desc}</p>
               </div>
             ))}
           </div>
         </div>
 
-        {/* ── FUN FACTS ── */}
-        <div>
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
+        {/* ── BY THE NUMBERS ── */}
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 print:shadow-none print:border-gray-300 print:rounded-lg print:p-3">
+          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 print:text-[9px]">
             By the Numbers
           </h2>
-          <p className="text-xs text-gray-400 mb-3">Highlights from your search</p>
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <p className="text-xs text-gray-400 mb-3 print:mb-1.5 print:text-[9px]">Highlights from your search</p>
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 print:grid-cols-4 print:gap-1.5">
             {funFacts.map((fact, i) => (
               <div
                 key={i}
-                className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 print:shadow-none print:border-gray-300"
+                className="bg-white rounded-xl border border-gray-200 shadow-sm p-4 print:shadow-none print:border-gray-300 print:rounded-lg print:p-2"
               >
-                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider">
+                <p className="text-[10px] font-bold text-gray-400 uppercase tracking-wider print:text-[8px]">
                   {fact.label}
                 </p>
-                <p className="text-2xl font-black text-gray-900 mt-1 leading-tight">{fact.value}</p>
-                <p className="text-[11px] text-gray-400 mt-1.5 leading-snug">{fact.desc}</p>
+                <p className="text-2xl font-black text-gray-900 mt-1 leading-tight print:text-base print:mt-0.5">
+                  {fact.value}
+                </p>
+                <p className="text-[11px] text-gray-400 mt-1.5 leading-snug print:text-[9px] print:mt-0.5">
+                  {fact.desc}
+                </p>
               </div>
             ))}
           </div>
@@ -418,29 +459,38 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
 
         {/* ── ACTIVITY TIMELINE ── */}
         {timelineEntries.length > 1 && (
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 print:shadow-none print:border-gray-300">
-            <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 print:shadow-none print:border-gray-300 print:rounded-lg print:p-3">
+            <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 print:text-[9px]">
               Application Timeline
             </h2>
-            <p className="text-xs text-gray-400 mb-6">Daily application volume over your search</p>
-            <div className="flex items-end gap-px h-28 w-full group">
-              {timelineEntries.map(([date, count], i) => {
-                const pct = (count / maxDay) * 100
-                return (
-                  <div
-                    key={i}
-                    className="flex-1 h-full flex flex-col justify-end group/bar relative"
-                  >
-                    <div
-                      className="w-full rounded-t-sm bg-indigo-200 hover:bg-indigo-500 transition-colors"
-                      style={{ height: `${Math.max(pct, 2)}%` }}
-                    />
-                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 scale-0 group-hover/bar:scale-100 transition-transform origin-bottom bg-gray-900 text-white text-[10px] px-2 py-1 rounded z-20 pointer-events-none whitespace-nowrap">
-                      {count} on {date.slice(5)}
+            <p className="text-xs text-gray-400 mb-6 print:mb-2 print:text-[9px]">Daily application volume over your search</p>
+            <div className="flex gap-2">
+              <div className="flex flex-col justify-between h-28 print:h-14 text-[9px] print:text-[7px] font-bold text-gray-300 tabular-nums text-right shrink-0" style={{ minWidth: '1.5rem' }}>
+                <span>{maxDay}</span>
+                {maxDay >= 3 && <span>{Math.round(maxDay / 2)}</span>}
+                <span>0</span>
+              </div>
+              <div className="relative flex items-end gap-px h-28 print:h-14 w-full flex-1 group">
+                <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                  <div className="w-full border-t border-gray-100" />
+                  {maxDay >= 3 && <div className="w-full border-t border-gray-100" />}
+                  <div className="w-full border-t border-gray-100" />
+                </div>
+                {timelineEntries.map(([date, count], i) => {
+                  const pct = (count / maxDay) * 100
+                  return (
+                    <div key={i} className="flex-1 h-full flex flex-col justify-end group/bar relative">
+                      <div
+                        className="w-full rounded-t-sm bg-indigo-200 hover:bg-indigo-500 transition-colors"
+                        style={{ height: `${Math.max(pct, 2)}%` }}
+                      />
+                      <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 scale-0 group-hover/bar:scale-100 transition-transform origin-bottom bg-gray-900 text-white text-[10px] px-2 py-1 rounded z-20 pointer-events-none whitespace-nowrap">
+                        {count} on {date.slice(5)}
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
             <div className="flex justify-between mt-3 text-[10px] font-bold text-gray-300 uppercase tracking-widest">
               <span>{timelineEntries[0]?.[0]?.slice(5)}</span>
@@ -451,27 +501,27 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
         )}
 
         {/* ── FULL STATUS BREAKDOWN ── */}
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 print:shadow-none print:border-gray-300">
-          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 print:shadow-none print:border-gray-300 print:rounded-lg print:p-3">
+          <h2 className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1 print:text-[9px]">
             Full Status Breakdown
           </h2>
-          <p className="text-xs text-gray-400 mb-5">Every status and its share</p>
-          <div className="space-y-3.5">
+          <p className="text-xs text-gray-400 mb-5 print:mb-2 print:text-[9px]">Every status and its share</p>
+          <div className="space-y-3.5 print:space-y-0 print:grid print:grid-cols-2 print:gap-x-5 print:gap-y-1.5">
             {statusEntries.map(([status, count]) => {
               const { color } = getStatusStyle(status)
               const pct = data.total > 0 ? (count / data.total) * 100 : 0
               return (
                 <div key={status}>
-                  <div className="flex items-center justify-between mb-1.5">
-                    <span className="text-sm font-semibold text-gray-700">{status}</span>
-                    <div className="flex items-center gap-3">
-                      <span className="text-xs text-gray-400">{pct.toFixed(1)}%</span>
-                      <span className="text-sm font-bold text-gray-900 w-8 text-right tabular-nums">
+                  <div className="flex items-center justify-between mb-1.5 print:mb-0.5">
+                    <span className="text-sm font-semibold text-gray-700 print:text-[10px]">{status}</span>
+                    <div className="flex items-center gap-3 print:gap-1.5">
+                      <span className="text-xs text-gray-400 print:text-[9px]">{pct.toFixed(1)}%</span>
+                      <span className="text-sm font-bold text-gray-900 w-8 text-right tabular-nums print:text-[10px] print:w-6">
                         {count}
                       </span>
                     </div>
                   </div>
-                  <div className="h-2 w-full bg-gray-50 rounded-full overflow-hidden">
+                  <div className="h-2 w-full bg-gray-50 rounded-full overflow-hidden print:h-1">
                     <div
                       className="h-full rounded-full transition-all"
                       style={{ width: `${pct}%`, backgroundColor: color }}
@@ -484,7 +534,7 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
         </div>
 
         {/* ── FOOTER ── */}
-        <div className="text-center text-xs text-gray-300 pb-4">
+        <div className="text-center text-xs text-gray-300 pb-4 print:pb-1 print:text-[9px]">
           Generated{' '}
           {new Date().toLocaleDateString('en-US', {
             month: 'long',
@@ -493,6 +543,7 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
           })}{' '}
           &middot; Job Tracker
         </div>
+
       </div>
     </div>
   )

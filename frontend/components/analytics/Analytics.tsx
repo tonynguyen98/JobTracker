@@ -76,25 +76,36 @@ export default function Analytics({ stats }: Props) {
             </div>
           </div>
 
-          <div className="p-6 flex-1 flex flex-col justify-end">
-            <div className="flex items-end gap-1 h-32 w-full group">
-              {chartData.map((d, i) => {
-                const pct = (d.count / max) * 100
-                const isLatest = i === chartData.length - 1
-                return (
-                  <div key={i} className="flex-1 h-full flex flex-col justify-end group/bar relative">
-                    <div
-                      className={`w-full rounded-t-sm transition-all duration-300 ${isLatest ? 'bg-indigo-500' : 'bg-indigo-100 group-hover:bg-indigo-200'
-                        }`}
-                      style={{ height: `${Math.max(pct, 2)}%` }}
-                    />
-                    {/* Tooltip */}
-                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 scale-0 group-hover/bar:scale-100 transition-transform bg-gray-900 text-white text-[10px] px-2 py-1 rounded z-20 pointer-events-none whitespace-nowrap">
-                      {d.count} apps {view === 'daily' ? `on ${(d as DailyCount).date?.slice(5)}` : `week ${(d as WeeklyCount).label}`}
+          <div className="p-6 flex-1 flex flex-col">
+            <div className="flex gap-2 flex-1 min-h-0">
+              <div className="flex flex-col justify-between text-[9px] font-bold text-gray-300 tabular-nums text-right shrink-0" style={{ minWidth: '1.5rem' }}>
+                <span>{max}</span>
+                {max >= 3 && <span>{Math.round(max / 2)}</span>}
+                <span>0</span>
+              </div>
+              <div className="relative flex items-end gap-1 w-full flex-1 group">
+                <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                  <div className="w-full border-t border-gray-100" />
+                  {max >= 3 && <div className="w-full border-t border-gray-100" />}
+                  <div className="w-full border-t border-gray-100" />
+                </div>
+                {chartData.map((d, i) => {
+                  const pct = (d.count / max) * 100
+                  const isLatest = i === chartData.length - 1
+                  return (
+                    <div key={i} className="flex-1 h-full flex flex-col justify-end group/bar relative">
+                      <div
+                        className={`w-full rounded-t-sm transition-all duration-300 ${isLatest ? 'bg-indigo-500' : 'bg-indigo-100 group-hover:bg-indigo-200'
+                          }`}
+                        style={{ height: `${Math.max(pct, 2)}%` }}
+                      />
+                      <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 scale-0 group-hover/bar:scale-100 transition-transform bg-gray-900 text-white text-[10px] px-2 py-1 rounded z-20 pointer-events-none whitespace-nowrap">
+                        {d.count} apps {view === 'daily' ? `on ${(d as DailyCount).date?.slice(5)}` : `week ${(d as WeeklyCount).label}`}
+                      </div>
                     </div>
-                  </div>
-                )
-              })}
+                  )
+                })}
+              </div>
             </div>
             <div className="flex justify-between mt-3 text-[10px] font-bold text-gray-300 uppercase tracking-widest">
               <span>{view === 'daily' ? (chartData[0] as DailyCount)?.date?.slice(5) : (chartData[0] as WeeklyCount)?.label}</span>

@@ -121,7 +121,7 @@ export default function Home() {
   }
 
   return (
-    <div className="min-h-screen" style={{ background: '#f1f5f9' }}>
+    <div id="main-app-root" className="min-h-screen" style={{ background: '#f1f5f9' }}>
       <header className="bg-white border-b border-gray-200 sticky top-0 z-10">
         <div className="max-w-screen-xl mx-auto px-6 py-3 flex flex-wrap items-center justify-between gap-3">
           <Link href="/" className="flex items-center gap-3 min-w-0 hover:opacity-75 transition-opacity">
