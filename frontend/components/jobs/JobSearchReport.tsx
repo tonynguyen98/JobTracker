@@ -86,6 +86,7 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
       accepted: byStatus['Accepted'] ?? 0,
       firstDate,
       lastDate,
+      todayStr,
       durationDays,
       topTitle: topTitleEntry?.[0] ?? null,
       topTitleCount: topTitleEntry?.[1] ?? 0,
@@ -231,7 +232,7 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
       label: 'Days Searching',
       value: data.durationDays > 0 ? String(data.durationDays) : '—',
       desc: data.firstDate
-        ? `${fmt(data.firstDate, { month: 'short', day: 'numeric' })} → Today`
+        ? `${fmt(data.firstDate, { month: 'short', day: 'numeric' })} → ${fmt(data.todayStr, { month: 'short', day: 'numeric', year: 'numeric' })}`
         : 'Date range not available',
     },
     {
