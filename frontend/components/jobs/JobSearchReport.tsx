@@ -37,9 +37,9 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
       .sort()
     const firstDate = validDates[0] ?? null
     const lastDate = validDates[validDates.length - 1] ?? null
-    const todayStr = new Date().toISOString().slice(0, 10)
+    const endDateStr = process.env.NEXT_PUBLIC_SEARCH_END_DATE ?? new Date().toISOString().slice(0, 10)
     const durationDays = firstDate
-      ? Math.ceil((new Date(todayStr).getTime() - new Date(firstDate).getTime()) / 86400000)
+      ? Math.ceil((new Date(endDateStr).getTime() - new Date(firstDate).getTime()) / 86400000)
       : 0
 
     // Most common job title
@@ -86,7 +86,7 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
       accepted: byStatus['Accepted'] ?? 0,
       firstDate,
       lastDate,
-      todayStr,
+      endDateStr,
       durationDays,
       topTitle: topTitleEntry?.[0] ?? null,
       topTitleCount: topTitleEntry?.[1] ?? 0,
@@ -232,7 +232,7 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
       label: 'Days Searching',
       value: data.durationDays > 0 ? String(data.durationDays) : '—',
       desc: data.firstDate
-        ? `${fmt(data.firstDate, { month: 'short', day: 'numeric' })} → ${fmt(data.todayStr, { month: 'short', day: 'numeric', year: 'numeric' })}`
+        ? `${fmt(data.firstDate, { month: 'short', day: 'numeric' })} → ${fmt(data.endDateStr, { month: 'short', day: 'numeric', year: 'numeric' })}`
         : 'Date range not available',
     },
     {
@@ -295,7 +295,7 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
         </div>
       </div>
 
-      <div className="max-w-4xl mx-auto px-6 py-10 space-y-8 print:px-0 print:py-0 print:space-y-2">
+      <div className="max-w-4xl mx-auto px-6 py-10 space-y-8 print:px-0 print:py-0 print:space-y-1.5">
 
         {/* ── HERO HEADER ── */}
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm overflow-hidden print:shadow-none print:border-gray-300 print:rounded-lg">
@@ -311,8 +311,8 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
             </h1>
             <p className="text-slate-300 text-lg print:text-xs">
               {fmt(data.firstDate, { month: 'long', day: 'numeric', year: 'numeric' })}
-              {data.lastDate !== data.firstDate && (
-                <> &ndash; {fmt(data.lastDate, { month: 'long', day: 'numeric', year: 'numeric' })}</>
+              {data.endDateStr !== data.firstDate && (
+                <> &ndash; {fmt(data.endDateStr, { month: 'long', day: 'numeric', year: 'numeric' })}</>
               )}
             </p>
           </div>
@@ -419,13 +419,13 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
               <div
                 key={i}
                 style={{ background: o.bg, borderColor: o.border }}
-                className="rounded-xl border p-4 text-center print:rounded-lg print:p-2"
+                className="rounded-xl border p-4 text-center print:rounded-lg print:p-1.5"
               >
-                <p style={{ color: o.color }} className="text-3xl font-black print:text-xl">
+                <p style={{ color: o.color }} className="text-3xl font-black print:text-lg">
                   {o.count}
                 </p>
-                <p className="text-xs font-bold text-gray-700 mt-1 print:text-[9px] print:mt-0.5">{o.label}</p>
-                <p className="text-[10px] text-gray-400 mt-0.5 leading-tight print:hidden">{o.desc}</p>
+                <p className="text-xs font-bold text-gray-700 mt-1 print:text-[8px] print:mt-0.5">{o.label}</p>
+                <p className="text-[10px] text-gray-400 mt-0.5 leading-tight print:text-[7px] print:mt-0">{o.desc}</p>
               </div>
             ))}
           </div>
@@ -465,12 +465,12 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
             </h2>
             <p className="text-xs text-gray-400 mb-6 print:mb-2 print:text-[9px]">Daily application volume over your search</p>
             <div className="flex gap-2">
-              <div className="flex flex-col justify-between h-28 print:h-14 text-[9px] print:text-[7px] font-bold text-gray-300 tabular-nums text-right shrink-0" style={{ minWidth: '1.5rem' }}>
+              <div className="flex flex-col justify-between h-28 print:h-10 text-[9px] print:text-[7px] font-bold text-gray-300 tabular-nums text-right shrink-0" style={{ minWidth: '1.5rem' }}>
                 <span>{maxDay}</span>
                 {maxDay >= 3 && <span>{Math.round(maxDay / 2)}</span>}
                 <span>0</span>
               </div>
-              <div className="relative flex items-end gap-px h-28 print:h-14 w-full flex-1 group">
+              <div className="relative flex items-end gap-px h-28 print:h-10 w-full flex-1 group">
                 <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
                   <div className="w-full border-t border-gray-100" />
                   {maxDay >= 3 && <div className="w-full border-t border-gray-100" />}
@@ -506,7 +506,7 @@ export default function JobSearchReport({ jobs, onClose }: Props) {
             Full Status Breakdown
           </h2>
           <p className="text-xs text-gray-400 mb-5 print:mb-2 print:text-[9px]">Every status and its share</p>
-          <div className="space-y-3.5 print:space-y-0 print:grid print:grid-cols-2 print:gap-x-5 print:gap-y-1.5">
+          <div className="space-y-3.5 print:space-y-0 print:grid print:grid-cols-2 print:gap-x-5 print:gap-y-1">
             {statusEntries.map(([status, count]) => {
               const { color } = getStatusStyle(status)
               const pct = data.total > 0 ? (count / data.total) * 100 : 0
